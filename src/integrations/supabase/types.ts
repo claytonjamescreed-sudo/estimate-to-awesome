@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string
+          id: string
+          page_url: string | null
+          status: Database["public"]["Enums"]["client_request_status"]
+          submitter_email: string
+          submitter_name: string
+          submitter_user_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["client_request_type"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          page_url?: string | null
+          status?: Database["public"]["Enums"]["client_request_status"]
+          submitter_email: string
+          submitter_name: string
+          submitter_user_id?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["client_request_type"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          page_url?: string | null
+          status?: Database["public"]["Enums"]["client_request_status"]
+          submitter_email?: string
+          submitter_name?: string
+          submitter_user_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["client_request_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -257,6 +302,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      client_request_status: "new" | "in_progress" | "resolved" | "wont_fix"
+      client_request_type: "bug" | "feature" | "other"
       proposal_status: "draft" | "sent" | "won" | "lost" | "archived"
     }
     CompositeTypes: {
@@ -386,6 +433,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      client_request_status: ["new", "in_progress", "resolved", "wont_fix"],
+      client_request_type: ["bug", "feature", "other"],
       proposal_status: ["draft", "sent", "won", "lost", "archived"],
     },
   },
