@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Logo } from "@/routes/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FeedbackButton } from "@/components/feedback-button";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, isAdmin } = useAuth();
