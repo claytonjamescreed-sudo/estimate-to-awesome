@@ -115,8 +115,7 @@ function NewProposalPage() {
         status: "draft" as const,
         currency: "CAD",
         total_amount: subtotal * (1 + content.line_items.tax_rate),
-        // The integration's typegen treats `content` as Json; pass through.
-        content: content as unknown as Record<string, unknown>,
+        content: content as never,
       };
 
       const { data, error } = await supabase
@@ -126,13 +125,15 @@ function NewProposalPage() {
         .single();
       if (error) throw error;
 
-      // Optional: save raw PDF text snapshot for traceability
-      if (pdfText && data) {
+      // Persist the parsed estimate snapshot alongside the proposal.
+      // (file_path stays empty for now — we record the extracted JSON only.)
+      if (parsed && data) {
         await supabase.from("estimate_uploads").insert({
           proposal_id: data.id,
-          owner_id: user.id,
-          raw_text: pdfText.slice(0, 200_000),
-          parsed: parsed as unknown as Record<string, unknown>,
+          uploaded_by: user.id,
+          file_path: `inline:${data.id}`,
+          original_name: "Pasted/parsed estimate",
+          parsed_json: parsed as never,
         });
       }
 
