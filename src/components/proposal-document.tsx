@@ -1,5 +1,6 @@
 import type { ProposalContent } from "@/lib/proposal-types";
 import { money, shortDate } from "@/lib/format";
+import gosaviLogo from "@/assets/gosavi-logo.png";
 
 interface Props {
   content: ProposalContent;
