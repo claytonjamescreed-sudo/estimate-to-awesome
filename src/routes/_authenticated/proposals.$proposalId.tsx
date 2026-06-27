@@ -337,7 +337,7 @@ function RevisionList({ proposalId }: { proposalId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("proposal_revisions")
-        .select("id, created_at, author_id")
+        .select("id, created_at, version, created_by")
         .eq("proposal_id", proposalId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -349,7 +349,7 @@ function RevisionList({ proposalId }: { proposalId: string }) {
       {revs.length === 0 && <p className="text-sm text-muted-foreground">No revisions yet. Saving creates a snapshot.</p>}
       {revs.map((r) => (
         <div key={r.id} className="rounded-md border border-border p-3 text-sm">
-          <p className="font-medium">{new Date(r.created_at).toLocaleString()}</p>
+          <p className="font-medium">v{r.version} · {new Date(r.created_at).toLocaleString()}</p>
           <p className="text-xs text-muted-foreground">Snapshot · {r.id.slice(0, 8)}</p>
         </div>
       ))}
