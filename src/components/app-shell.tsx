@@ -17,7 +17,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/proposals", label: "Proposals", icon: FileText },
     { to: "/clients", label: "Clients", icon: Users },
-    ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: ShieldCheck }] : []),
+    ...(isAdmin ? [
+      { to: "/admin", label: "Admin", icon: ShieldCheck },
+      { to: "/admin/requests", label: "Requests", icon: Inbox },
+    ] : []),
   ];
 
   async function signOut() {
