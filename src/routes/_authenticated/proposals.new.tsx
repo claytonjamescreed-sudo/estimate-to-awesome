@@ -50,7 +50,6 @@ function NewProposalPage() {
     try {
       // Lazy-load pdf.js (legacy build) so the bundle stays slim until first use.
       const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      // @ts-expect-error worker import string
       const worker = (await import("pdfjs-dist/legacy/build/pdf.worker.mjs?url")).default;
       pdfjs.GlobalWorkerOptions.workerSrc = worker;
 
