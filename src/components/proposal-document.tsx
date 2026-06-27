@@ -179,15 +179,11 @@ function Meta({ label, value }: { label: string; value: string }) {
 function BrandMark({ light = false }: { light?: boolean }) {
   return (
     <div className="inline-flex items-center gap-2.5">
-      <span
-        className="grid place-items-center h-9 w-9 rounded-md font-display text-lg font-semibold"
-        style={{ background: "var(--gradient-brand)", color: "oklch(0.2 0.04 270)" }}
-      >
-        G
-      </span>
-      <span className={`font-display text-xl tracking-tight ${light ? "text-paper" : "text-ink"}`}>
-        GOSAVI<span className="text-accent">.</span>
-      </span>
+      <img
+        src={gosaviLogo}
+        alt="GOSAVI Meeting Solutions"
+        className={`h-8 w-auto ${light ? "brightness-0 invert" : ""}`}
+      />
     </div>
   );
 }
