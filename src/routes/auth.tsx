@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import gosaviLogo from "@/assets/gosavi-logo.png";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
