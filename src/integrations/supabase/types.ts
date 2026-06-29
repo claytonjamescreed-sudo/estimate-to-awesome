@@ -17,10 +17,12 @@ export type Database = {
       client_requests: {
         Row: {
           admin_notes: string | null
+          commit_ref: string | null
           created_at: string
           description: string
           id: string
           page_url: string | null
+          shipped_at: string | null
           status: Database["public"]["Enums"]["client_request_status"]
           submitter_email: string
           submitter_name: string
@@ -31,10 +33,12 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          commit_ref?: string | null
           created_at?: string
           description: string
           id?: string
           page_url?: string | null
+          shipped_at?: string | null
           status?: Database["public"]["Enums"]["client_request_status"]
           submitter_email: string
           submitter_name: string
@@ -45,10 +49,12 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          commit_ref?: string | null
           created_at?: string
           description?: string
           id?: string
           page_url?: string | null
+          shipped_at?: string | null
           status?: Database["public"]["Enums"]["client_request_status"]
           submitter_email?: string
           submitter_name?: string
