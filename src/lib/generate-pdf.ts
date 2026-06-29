@@ -9,7 +9,7 @@
 
 const PAGE_W_IN = 8.5;
 const PAGE_H_IN = 11;
-const PIXEL_RATIO = 2; // capture at 2x for crisper text
+const PIXEL_RATIO = 2.5; // capture above 2x so dense tables stay readable
 
 export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
   const [{ toCanvas }, { jsPDF }] = await Promise.all([
@@ -55,14 +55,7 @@ export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
       // Always emit at least one page; round up partial trailing content.
       const sliceCount = Math.max(1, Math.ceil(totalHeightPx / pageHeightPx));
 
-      // Avoid creating a final page that holds only a thin sliver: if the
-      // last slice would be under ~12% of a page, merge it into the prior
-      // slice by stretching slightly.
-      let slices = sliceCount;
-      const lastSliceHeight = totalHeightPx - (slices - 1) * pageHeightPx;
-      if (slices > 1 && lastSliceHeight < pageHeightPx * 0.12) {
-        slices = slices - 1;
-      }
+      const slices = sliceCount;
 
       for (let i = 0; i < slices; i++) {
         const isLast = i === slices - 1;
@@ -81,10 +74,10 @@ export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
           0, 0, sourceCanvas.width, sh,
         );
 
-        const dataUrl = sliceCanvas.toDataURL("image/jpeg", 0.92);
+        const dataUrl = sliceCanvas.toDataURL("image/png");
         if (firstAdded) pdf.addPage("letter", "portrait");
         firstAdded = true;
-        pdf.addImage(dataUrl, "JPEG", 0, 0, PAGE_W_IN, PAGE_H_IN, undefined, "FAST");
+        pdf.addImage(dataUrl, "PNG", 0, 0, PAGE_W_IN, PAGE_H_IN, undefined, "FAST");
       }
     }
   } finally {

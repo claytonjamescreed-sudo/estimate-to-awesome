@@ -14,6 +14,8 @@ interface Props {
  * produces a clean, branded PDF without round-tripping through a server.
  */
 export function ProposalDocument({ content, currency, totals }: Props) {
+  const investmentPages = paginateInvestmentSections(content.line_items.sections, content.investment.enabled && Boolean(content.investment.note));
+
   return (
     <div className="space-y-8">
       {content.cover.enabled && <Cover content={content} />}
@@ -65,62 +67,21 @@ export function ProposalDocument({ content, currency, totals }: Props) {
           </div>
         </BodyPage>
       )}
-      {content.line_items.enabled && (
-        <BodyPage title="Investment Detail" subtitle={content.cover.client_name}>
-          <div className="space-y-6">
-            {content.line_items.sections.map((s) => {
-              const sectionTotal = s.items.reduce((a, it) => a + it.qty * it.unit_price, 0);
-              return (
-                <div key={s.id}>
-                  <div className="flex items-baseline justify-between border-b border-ink/15 pb-2 mb-2">
-                    <h3 className="font-display text-lg text-ink">{s.name}</h3>
-                    <span className="text-sm text-ink/60 tabular-nums">{money(sectionTotal, currency)}</span>
-                  </div>
-                  <table className="w-full text-[13px]">
-                    <thead>
-                      <tr className="text-left text-[11px] uppercase tracking-wider text-ink/50">
-                        <th className="py-1.5 w-10">Qty</th>
-                        <th className="py-1.5 w-24">Make</th>
-                        <th className="py-1.5 w-28">Model</th>
-                        <th className="py-1.5">Description</th>
-                        <th className="py-1.5 w-20 text-right">Unit</th>
-                        <th className="py-1.5 w-24 text-right">Ext.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {s.items.map((it) => (
-                        <tr key={it.id} className="align-top border-t border-ink/10">
-                          <td className="py-1.5 tabular-nums">{it.qty}</td>
-                          <td className="py-1.5">{it.make}</td>
-                          <td className="py-1.5 font-mono text-[12px]">{it.model}</td>
-                          <td className="py-1.5 pr-2">{it.description}</td>
-                          <td className="py-1.5 text-right tabular-nums">{money(it.unit_price, currency)}</td>
-                          <td className="py-1.5 text-right tabular-nums">{money(it.qty * it.unit_price, currency)}</td>
-                        </tr>
-                      ))}
-                      {s.items.length === 0 && (
-                        <tr><td colSpan={6} className="py-3 text-center text-ink/40 italic text-xs">No items in this section</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })}
-
-            <div className="ml-auto w-72 border-t-2 border-ink/80 pt-3 space-y-1.5 text-[13px]">
-              <div className="flex justify-between"><span className="text-ink/60">Subtotal</span><span className="tabular-nums">{money(totals.subtotal, currency)}</span></div>
-              <div className="flex justify-between"><span className="text-ink/60">Tax ({(content.line_items.tax_rate * 100).toFixed(0)}%)</span><span className="tabular-nums">{money(totals.tax, currency)}</span></div>
-              <div className="flex justify-between font-display text-lg pt-1 border-t border-ink/20">
-                <span>Total</span><span className="tabular-nums">{money(totals.total, currency)}</span>
-              </div>
-            </div>
-
-            {content.investment.enabled && (
-              <p className="text-xs text-ink/60 italic border-l-2 border-accent pl-3">{content.investment.note}</p>
-            )}
-          </div>
+      {content.line_items.enabled && investmentPages.map((page, index) => (
+        <BodyPage
+          key={`investment-${index}`}
+          title={index === 0 ? "Investment Detail" : "Investment Detail (continued)"}
+          subtitle={content.cover.client_name}
+        >
+          <InvestmentPageContent
+            page={page}
+            currency={currency}
+            totals={totals}
+            taxRate={content.line_items.tax_rate}
+            investmentNote={content.investment.enabled ? content.investment.note : ""}
+          />
         </BodyPage>
-      )}
+      ))}
       {content.terms.enabled && (
         <BodyPage title="Terms & Conditions" subtitle={content.cover.client_name}>
           <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-ink/80">{content.terms.body}</p>
@@ -130,6 +91,161 @@ export function ProposalDocument({ content, currency, totals }: Props) {
         <BodyPage title={content.appendix.title || "Appendix"} subtitle={content.cover.client_name}>
           <p className="text-[14px] leading-relaxed whitespace-pre-wrap text-ink/85">{content.appendix.body}</p>
         </BodyPage>
+      )}
+    </div>
+  );
+}
+
+type InvestmentPageSection = {
+  id: string;
+  name: string;
+  items: LineItem[];
+  total: number;
+  continued: boolean;
+  showTotal: boolean;
+};
+
+type InvestmentPage = {
+  sections: InvestmentPageSection[];
+  showSummary: boolean;
+};
+
+const INVESTMENT_PAGE_UNITS = 18;
+
+function rowUnits(item: LineItem) {
+  const textLength = `${item.make} ${item.model} ${item.description}`.length;
+  return Math.max(1, Math.ceil(textLength / 115));
+}
+
+function paginateInvestmentSections(sections: LineSection[], hasInvestmentNote: boolean): InvestmentPage[] {
+  const pages: InvestmentPage[] = [];
+  let current: InvestmentPage = { sections: [], showSummary: false };
+  let used = 0;
+
+  const commit = () => {
+    if (current.sections.length > 0 || current.showSummary) pages.push(current);
+    current = { sections: [], showSummary: false };
+    used = 0;
+  };
+
+  for (const section of sections) {
+    const total = section.items.reduce((a, it) => a + it.qty * it.unit_price, 0);
+
+    if (section.items.length === 0) {
+      if (used > 0 && used + 3 > INVESTMENT_PAGE_UNITS) commit();
+      current.sections.push({ id: section.id, name: section.name, items: [], total, continued: false, showTotal: true });
+      used += 3;
+      continue;
+    }
+
+    let index = 0;
+    while (index < section.items.length) {
+      const continued = index > 0;
+      const headerUnits = 3;
+      if (used > 0 && used + headerUnits + rowUnits(section.items[index]) > INVESTMENT_PAGE_UNITS) commit();
+
+      const chunk: LineItem[] = [];
+      let chunkUnits = headerUnits;
+
+      while (index < section.items.length) {
+        const itemUnits = rowUnits(section.items[index]);
+        if (chunk.length > 0 && used + chunkUnits + itemUnits > INVESTMENT_PAGE_UNITS) break;
+        chunk.push(section.items[index]);
+        chunkUnits += itemUnits;
+        index += 1;
+      }
+
+      current.sections.push({
+        id: `${section.id}-${index}`,
+        name: section.name,
+        items: chunk,
+        total,
+        continued,
+        showTotal: index >= section.items.length,
+      });
+      used += chunkUnits;
+
+      if (index < section.items.length) commit();
+    }
+  }
+
+  const summaryUnits = hasInvestmentNote ? 5 : 4;
+  if (used > 0 && used + summaryUnits > INVESTMENT_PAGE_UNITS) commit();
+  current.showSummary = true;
+  commit();
+
+  return pages.length > 0 ? pages : [{ sections: [], showSummary: true }];
+}
+
+function InvestmentPageContent({
+  page,
+  currency,
+  totals,
+  taxRate,
+  investmentNote,
+}: {
+  page: InvestmentPage;
+  currency: string;
+  totals: Props["totals"];
+  taxRate: number;
+  investmentNote: string;
+}) {
+  return (
+    <div className="space-y-5">
+      {page.sections.map((section) => (
+        <div key={section.id} data-pdf-section>
+          <div className="flex items-baseline justify-between border-b border-ink/15 pb-2 mb-2 gap-6">
+            <h3 className="font-display text-lg text-ink leading-tight break-words">
+              {section.name}{section.continued ? " (continued)" : ""}
+            </h3>
+            <span className="text-sm text-ink/60 tabular-nums shrink-0">
+              {section.showTotal ? money(section.total, currency) : "continued"}
+            </span>
+          </div>
+          <table className="w-full table-fixed text-[12px] leading-snug">
+            <thead>
+              <tr className="text-left text-[10px] uppercase tracking-wider text-ink/50">
+                <th className="py-1.5 w-[7%]">Qty</th>
+                <th className="py-1.5 w-[17%]">Make</th>
+                <th className="py-1.5 w-[19%]">Model</th>
+                <th className="py-1.5 w-[31%]">Description</th>
+                <th className="py-1.5 w-[12%] text-right">Unit</th>
+                <th className="py-1.5 w-[14%] text-right">Ext.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {section.items.map((it) => (
+                <tr key={it.id} className="align-top border-t border-ink/10">
+                  <td className="py-1.5 pr-1 tabular-nums break-words">{it.qty}</td>
+                  <td className="py-1.5 pr-2 break-words">{it.make}</td>
+                  <td className="py-1.5 pr-2 font-mono text-[11px] break-words">{it.model}</td>
+                  <td className="py-1.5 pr-2 break-words">{it.description}</td>
+                  <td className="py-1.5 pl-1 text-right tabular-nums break-words">{money(it.unit_price, currency)}</td>
+                  <td className="py-1.5 pl-1 text-right tabular-nums break-words">{money(it.qty * it.unit_price, currency)}</td>
+                </tr>
+              ))}
+              {section.items.length === 0 && (
+                <tr><td colSpan={6} className="py-3 text-center text-ink/40 italic text-xs">No items in this section</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      {page.showSummary && (
+        <div className="pt-2 space-y-4" data-pdf-section>
+          <div className="ml-auto w-72 border-t-2 border-ink/80 pt-3 space-y-1.5 text-[13px]">
+            <div className="flex justify-between"><span className="text-ink/60">Subtotal</span><span className="tabular-nums">{money(totals.subtotal, currency)}</span></div>
+            <div className="flex justify-between"><span className="text-ink/60">Tax ({(taxRate * 100).toFixed(0)}%)</span><span className="tabular-nums">{money(totals.tax, currency)}</span></div>
+            <div className="flex justify-between font-display text-lg pt-1 border-t border-ink/20">
+              <span>Total</span><span className="tabular-nums">{money(totals.total, currency)}</span>
+            </div>
+          </div>
+
+          {investmentNote && (
+            <p className="text-xs text-ink/60 italic border-l-2 border-accent pl-3">{investmentNote}</p>
+          )}
+        </div>
       )}
     </div>
   );
