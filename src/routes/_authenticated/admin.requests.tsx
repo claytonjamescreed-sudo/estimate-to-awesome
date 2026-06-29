@@ -228,6 +228,49 @@ function RequestsPage() {
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
+
+                    <div className="mt-3 grid sm:grid-cols-[1fr_auto] gap-3 items-center">
+                      <div className="relative">
+                        <GitCommit className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          defaultValue={r.commit_ref ?? ""}
+                          placeholder="Commit SHA, PR link, or deploy ref…"
+                          className="h-9 pl-9 text-xs"
+                          onBlur={(e) => {
+                            const v = e.target.value.trim();
+                            if (v !== (r.commit_ref ?? "")) {
+                              updateMut.mutate({ id: r.id, patch: { commit_ref: v || null } });
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant={r.shipped_at ? "outline" : "default"}
+                        size="sm"
+                        onClick={() =>
+                          updateMut.mutate({
+                            id: r.id,
+                            patch: {
+                              shipped_at: r.shipped_at ? null : new Date().toISOString(),
+                              status: r.shipped_at ? r.status : "resolved",
+                            },
+                          })
+                        }
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                        {r.shipped_at ? "Unmark shipped" : "Mark as shipped"}
+                      </Button>
+                    </div>
+                    {r.commit_ref && /^https?:\/\//.test(r.commit_ref) && (
+                      <a
+                        href={r.commit_ref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <ExternalLink className="h-3 w-3" /> Open commit/PR
+                      </a>
+                    )}
                   </div>
                 </div>
               </Card>
