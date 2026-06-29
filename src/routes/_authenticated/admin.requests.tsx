@@ -168,6 +168,11 @@ function RequestsPage() {
                         {STATUS_LABEL[r.status]}
                       </Badge>
                       <Badge variant="outline" className="text-xs">{r.type}</Badge>
+                      {r.shipped_at && (
+                        <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/40 text-xs inline-flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" /> Shipped {new Date(r.shipped_at).toLocaleDateString()}
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
                       {r.description}
