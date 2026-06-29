@@ -1,11 +1,7 @@
-// Client-only PDF generation. We rasterize each `.doc-page` at its full
-// natural height (overflow temporarily unclipped) and then slice the result
-// into 8.5x11 letter-sized pages. This avoids two failure modes we hit
-// previously:
-//   1. content past 11in being clipped by `overflow: hidden` on .doc-page
-//   2. arbitrary tiny slivers when the document wasn't a clean multiple of 11in
-//
-// Returns a Blob suitable for download or iframe preview.
+// Client-only PDF generation. Each rendered `.doc-page` becomes exactly one
+// letter PDF page so the download matches the on-screen proposal preview.
+// Long sections are paginated by the document component before export; the
+// exporter should not slice a page arbitrarily through tables or headings.
 
 const PAGE_W_IN = 8.5;
 const PAGE_H_IN = 11;
@@ -20,8 +16,8 @@ export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
   const pages = Array.from(root.querySelectorAll<HTMLElement>(".doc-page"));
   if (pages.length === 0) throw new Error("No .doc-page elements found to export.");
 
-  // Force every page to render at its natural height so nothing is clipped
-  // by `overflow: hidden` / `min-height: 11in` while we capture.
+  // During capture, briefly unclip small natural overflows so page content can
+  // be scaled onto one PDF page rather than producing a blank sliver page.
   const originals = pages.map((p) => ({
     el: p,
     overflow: p.style.overflow,
@@ -39,7 +35,7 @@ export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
 
   try {
     for (const page of pages) {
-      // Capture the entire (potentially > 11in) page to a canvas.
+      // Capture one logical proposal page and fit it onto one PDF page.
       const sourceCanvas = await toCanvas(page, {
         pixelRatio: PIXEL_RATIO,
         backgroundColor: "#ffffff",
@@ -49,36 +45,17 @@ export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
         style: { transform: "none" },
       });
 
-      const pxPerInch = sourceCanvas.width / PAGE_W_IN;
-      const pageHeightPx = Math.round(PAGE_H_IN * pxPerInch);
-      const totalHeightPx = sourceCanvas.height;
-      // Always emit at least one page; round up partial trailing content.
-      const sliceCount = Math.max(1, Math.ceil(totalHeightPx / pageHeightPx));
+      const dataUrl = sourceCanvas.toDataURL("image/png");
+      const canvasAspect = sourceCanvas.width / sourceCanvas.height;
+      const pageAspect = PAGE_W_IN / PAGE_H_IN;
+      const imgW = canvasAspect >= pageAspect ? PAGE_W_IN : PAGE_H_IN * canvasAspect;
+      const imgH = canvasAspect >= pageAspect ? PAGE_W_IN / canvasAspect : PAGE_H_IN;
+      const x = (PAGE_W_IN - imgW) / 2;
+      const y = 0;
 
-      const slices = sliceCount;
-
-      for (let i = 0; i < slices; i++) {
-        const isLast = i === slices - 1;
-        const sy = i * pageHeightPx;
-        const sh = isLast ? totalHeightPx - sy : pageHeightPx;
-
-        const sliceCanvas = document.createElement("canvas");
-        sliceCanvas.width = sourceCanvas.width;
-        sliceCanvas.height = pageHeightPx; // pad short last slice with white
-        const ctx = sliceCanvas.getContext("2d")!;
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-        ctx.drawImage(
-          sourceCanvas,
-          0, sy, sourceCanvas.width, sh,
-          0, 0, sourceCanvas.width, sh,
-        );
-
-        const dataUrl = sliceCanvas.toDataURL("image/png");
-        if (firstAdded) pdf.addPage("letter", "portrait");
-        firstAdded = true;
-        pdf.addImage(dataUrl, "PNG", 0, 0, PAGE_W_IN, PAGE_H_IN, undefined, "FAST");
-      }
+      if (firstAdded) pdf.addPage("letter", "portrait");
+      firstAdded = true;
+      pdf.addImage(dataUrl, "PNG", x, y, imgW, imgH, undefined, "FAST");
     }
   } finally {
     // Restore inline styles.
