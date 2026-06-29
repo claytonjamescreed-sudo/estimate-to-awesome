@@ -212,6 +212,49 @@ function EditorPage() {
               </div>
             </Section>
 
+            <Section id="client" title="Client spotlight" enabled={draft.content.client_spotlight.enabled} onToggle={(v) => updateContent((c) => { c.client_spotlight.enabled = v; })}>
+              <Field label="Logo URL"><Input placeholder="https://…" value={draft.content.client_spotlight.logo_url} onChange={(e) => updateContent((c) => { c.client_spotlight.logo_url = e.target.value; })} /></Field>
+              <div className="grid grid-cols-3 gap-2">
+                <Field label="Industry"><Input value={draft.content.client_spotlight.industry} onChange={(e) => updateContent((c) => { c.client_spotlight.industry = e.target.value; })} /></Field>
+                <Field label="HQ"><Input value={draft.content.client_spotlight.hq} onChange={(e) => updateContent((c) => { c.client_spotlight.hq = e.target.value; })} /></Field>
+                <Field label="Size"><Input value={draft.content.client_spotlight.size} onChange={(e) => updateContent((c) => { c.client_spotlight.size = e.target.value; })} /></Field>
+              </div>
+              <Field label="About"><Textarea rows={3} value={draft.content.client_spotlight.about} onChange={(e) => updateContent((c) => { c.client_spotlight.about = e.target.value; })} /></Field>
+              <Field label="The challenge"><Textarea rows={3} value={draft.content.client_spotlight.challenge} onChange={(e) => updateContent((c) => { c.client_spotlight.challenge = e.target.value; })} /></Field>
+              <Field label="Why GOSAVI"><Textarea rows={3} value={draft.content.client_spotlight.why_us} onChange={(e) => updateContent((c) => { c.client_spotlight.why_us = e.target.value; })} /></Field>
+            </Section>
+
+            <Section id="featured" title="Featured products" enabled={draft.content.featured_products.enabled} onToggle={(v) => updateContent((c) => { c.featured_products.enabled = v; })}>
+              <Field label="Intro"><Textarea rows={2} value={draft.content.featured_products.intro} onChange={(e) => updateContent((c) => { c.featured_products.intro = e.target.value; })} /></Field>
+              <div className="space-y-3">
+                {draft.content.featured_products.products.map((p, i) => (
+                  <div key={p.id} className="rounded-md border border-border p-2 space-y-2 bg-muted/20">
+                    <div className="flex items-center gap-2">
+                      <Input className="h-8 font-medium" placeholder="Product name" value={p.name} onChange={(e) => updateContent((c) => { c.featured_products.products[i].name = e.target.value; })} />
+                      <Button variant="ghost" size="icon" onClick={() => updateContent((c) => { c.featured_products.products.splice(i, 1); })}><X className="h-4 w-4" /></Button>
+                    </div>
+                    <Input className="h-8" placeholder="Tagline" value={p.tagline} onChange={(e) => updateContent((c) => { c.featured_products.products[i].tagline = e.target.value; })} />
+                    <Input className="h-8" placeholder="Image URL" value={p.image_url} onChange={(e) => updateContent((c) => { c.featured_products.products[i].image_url = e.target.value; })} />
+                    <Input className="h-8" placeholder="Product link" value={p.link} onChange={(e) => updateContent((c) => { c.featured_products.products[i].link = e.target.value; })} />
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Highlights</Label>
+                      {p.highlights.map((h, hi) => (
+                        <div key={hi} className="flex gap-1.5">
+                          <Input className="h-8" value={h} onChange={(e) => updateContent((c) => { c.featured_products.products[i].highlights[hi] = e.target.value; })} />
+                          <Button variant="ghost" size="icon" onClick={() => updateContent((c) => { c.featured_products.products[i].highlights.splice(hi, 1); })}><X className="h-4 w-4" /></Button>
+                        </div>
+                      ))}
+                      <Button variant="outline" size="sm" onClick={() => updateContent((c) => { c.featured_products.products[i].highlights.push(""); })}><Plus className="h-4 w-4" /> Highlight</Button>
+                    </div>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={() => updateContent((c) => {
+                  c.featured_products.products.push({ id: crypto.randomUUID(), name: "", tagline: "", image_url: "", link: "", highlights: [""] });
+                })}><Plus className="h-4 w-4" /> Add product</Button>
+              </div>
+            </Section>
+
+
             <Section id="items" title="Line items" enabled={draft.content.line_items.enabled} onToggle={(v) => updateContent((c) => { c.line_items.enabled = v; })}>
               <LineItemsEditor content={draft.content} updateContent={updateContent} />
             </Section>
