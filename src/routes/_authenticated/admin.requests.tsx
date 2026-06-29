@@ -16,7 +16,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Bug, Sparkles, HelpCircle, Trash2, ExternalLink, CheckCircle2, GitCommit } from "lucide-react";
+import { Bug, Sparkles, HelpCircle, Trash2, ExternalLink, CheckCircle2, GitCommit, Copy } from "lucide-react";
+
+function buildPrompt(r: Req): string {
+  return [
+    `Build this request from the board:`,
+    ``,
+    `Request #${r.id} — [${r.type}] ${r.title}`,
+    `Status: ${r.status}${r.shipped_at ? " (shipped)" : ""}`,
+    `Submitted by: ${r.submitter_name} <${r.submitter_email}>`,
+    `Submitted: ${new Date(r.created_at).toLocaleString()}`,
+    r.page_url ? `Page: ${r.page_url}` : null,
+    ``,
+    `Details:`,
+    r.description,
+    r.admin_notes ? `\nAdmin notes:\n${r.admin_notes}` : null,
+    ``,
+    `Please implement this, then I'll mark it shipped on /admin/requests with the commit SHA.`,
+  ].filter(Boolean).join("\n");
+}
 
 export const Route = createFileRoute("/_authenticated/admin/requests")({
   component: RequestsPage,
