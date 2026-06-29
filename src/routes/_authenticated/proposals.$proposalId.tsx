@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ArrowLeft, Save, Eye, Printer, History, Trash2, Plus, GripVertical, X, Sparkles, Library, Loader2,
+  ArrowLeft, Save, Eye, Download, History, Trash2, Plus, GripVertical, X, Sparkles, Library, Loader2,
 } from "lucide-react";
+import { generateProposalPdf, downloadBlob } from "@/lib/generate-pdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,25 @@ function EditorPage() {
   const [draft, setDraft] = useState<ProposalRow | null>(null);
   const [dirty, setDirty] = useState(false);
   const lastSaved = useRef<string>("");
+  const docPreviewRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!docPreviewRef.current || !draft) return;
+    setDownloading(true);
+    try {
+      await (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
+      const blob = await generateProposalPdf(docPreviewRef.current);
+      const name = (draft.title || "proposal").replace(/[^a-z0-9-_]+/gi, "_").replace(/^_+|_+$/g, "") + ".pdf";
+      downloadBlob(blob, name);
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't build PDF. Try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
 
   useEffect(() => {
     if (proposal && !draft) {
@@ -188,7 +208,11 @@ function EditorPage() {
           >
             <Eye className="h-4 w-4" /> Preview
           </Button>
-          <Button variant="outline" size="sm" onClick={() => window.print()} title="Print"><Printer className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading} title="Download PDF">
+            {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {downloading ? "Building…" : "Download PDF"}
+          </Button>
+
           <Button size="sm" onClick={() => save.mutate()} disabled={!dirty || save.isPending}>
             <Save className="h-4 w-4" /> Save
           </Button>
@@ -331,8 +355,11 @@ function EditorPage() {
         </aside>
 
         <div className="overflow-y-auto bg-muted/30 p-6 lg:p-10">
-          <ProposalDocument content={draft.content} currency={draft.currency} totals={totals} />
+          <div ref={docPreviewRef}>
+            <ProposalDocument content={draft.content} currency={draft.currency} totals={totals} />
+          </div>
         </div>
+
       </div>
     </div>
   );
