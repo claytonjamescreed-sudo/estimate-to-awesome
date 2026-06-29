@@ -187,7 +187,21 @@ function NewProposalPage() {
           <p className="text-xs text-muted-foreground">Manage clients on the <Link to="/clients" className="underline">Clients</Link> page.</p>
         </div>
 
-        <div className="rounded-xl border border-dashed border-border bg-card p-6">
+        <div
+          className={`rounded-xl border-dashed border bg-card p-6 transition-colors ${dragOver ? "border-accent bg-accent/5 ring-2 ring-accent/30" : "border-border"}`}
+          onDragOver={(e) => { e.preventDefault(); if (!parsing) setDragOver(true); }}
+          onDragEnter={(e) => { e.preventDefault(); if (!parsing) setDragOver(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            if (parsing) return;
+            const f = Array.from(e.dataTransfer.files).find((file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
+            if (f) handlePdf(f);
+            else if (e.dataTransfer.files.length) toast.error("Drop a PDF file");
+          }}
+        >
+
           <div className="flex items-start gap-4">
             <div className="h-10 w-10 grid place-items-center rounded-md bg-accent/15 text-accent">
               <FileUp className="h-5 w-5" />
