@@ -331,8 +331,11 @@ function EditorPage() {
         </aside>
 
         <div className="overflow-y-auto bg-muted/30 p-6 lg:p-10">
-          <ProposalDocument content={draft.content} currency={draft.currency} totals={totals} />
+          <div ref={docPreviewRef}>
+            <ProposalDocument content={draft.content} currency={draft.currency} totals={totals} />
+          </div>
         </div>
+
       </div>
     </div>
   );
