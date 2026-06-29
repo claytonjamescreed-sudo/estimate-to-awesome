@@ -216,6 +216,20 @@ function EditorPage() {
             </Section>
 
             <Section id="client" title="Client spotlight" enabled={draft.content.client_spotlight.enabled} onToggle={(v) => updateContent((c) => { c.client_spotlight.enabled = v; })}>
+              <ClientLookup
+                fallbackUrl={draft.content.client_spotlight.logo_url}
+                clientName={draft.content.cover.client_name}
+                onResult={(r) => updateContent((c) => {
+                  if (r.logo_url) c.client_spotlight.logo_url = r.logo_url;
+                  if (r.industry) c.client_spotlight.industry = r.industry;
+                  if (r.hq) c.client_spotlight.hq = r.hq;
+                  if (r.size) c.client_spotlight.size = r.size;
+                  if (r.about) c.client_spotlight.about = r.about;
+                  if (r.challenge) c.client_spotlight.challenge = r.challenge;
+                  if (r.why_us) c.client_spotlight.why_us = r.why_us;
+                  c.client_spotlight.enabled = true;
+                })}
+              />
               <Field label="Logo URL"><Input placeholder="https://…" value={draft.content.client_spotlight.logo_url} onChange={(e) => updateContent((c) => { c.client_spotlight.logo_url = e.target.value; })} /></Field>
               <div className="grid grid-cols-3 gap-2">
                 <Field label="Industry"><Input value={draft.content.client_spotlight.industry} onChange={(e) => updateContent((c) => { c.client_spotlight.industry = e.target.value; })} /></Field>
@@ -251,11 +265,20 @@ function EditorPage() {
                     </div>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => updateContent((c) => {
-                  c.featured_products.products.push({ id: crypto.randomUUID(), name: "", tagline: "", image_url: "", link: "", highlights: [""] });
-                })}><Plus className="h-4 w-4" /> Add product</Button>
+                <div className="flex gap-2">
+                  <ProductLibraryPicker
+                    onPick={(prod) => updateContent((c) => {
+                      c.featured_products.products.push({ ...prod, id: crypto.randomUUID() });
+                      c.featured_products.enabled = true;
+                    })}
+                  />
+                  <Button variant="outline" size="sm" onClick={() => updateContent((c) => {
+                    c.featured_products.products.push({ id: crypto.randomUUID(), name: "", tagline: "", image_url: "", link: "", highlights: [""] });
+                  })}><Plus className="h-4 w-4" /> Blank</Button>
+                </div>
               </div>
             </Section>
+
 
 
             <Section id="items" title="Line items" enabled={draft.content.line_items.enabled} onToggle={(v) => updateContent((c) => { c.line_items.enabled = v; })}>
