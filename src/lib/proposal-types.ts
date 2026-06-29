@@ -49,6 +49,8 @@ export interface ProposalContent {
   };
   exec_summary: { enabled: boolean; body: string };
   scope: { enabled: boolean; bullets: string[] };
+  client_spotlight: ClientSpotlight;
+  featured_products: { enabled: boolean; intro: string; products: FeaturedProduct[] };
   line_items: { enabled: boolean; sections: LineSection[]; tax_rate: number };
   investment: { enabled: boolean; note: string };
   terms: { enabled: boolean; preset: "standard" | "custom"; body: string };
