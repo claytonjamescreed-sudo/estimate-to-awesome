@@ -76,9 +76,6 @@ function NewProposalPage() {
       setPdfText(text);
       const result = parseConti(text);
       setParsed(result);
-      setPdfText(text);
-      const result = parseConti(text);
-      setParsed(result);
       // Auto-fill the form from the parsed estimate. Overwrite empty fields;
       // never clobber values the user has already typed.
       if (result.project_name) setTitle((t) => t.trim() ? t : result.project_name!);
