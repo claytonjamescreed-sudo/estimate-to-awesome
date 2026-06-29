@@ -114,13 +114,19 @@ function RequestsPage() {
   }
 
   const items = data ?? [];
-  const filtered = filter === "all" ? items : items.filter((r) => r.status === filter);
+  const filtered =
+    filter === "all"
+      ? items
+      : filter === "shipped"
+        ? items.filter((r) => !!r.shipped_at)
+        : items.filter((r) => r.status === filter);
   const counts = {
     all: items.length,
     new: items.filter((r) => r.status === "new").length,
     in_progress: items.filter((r) => r.status === "in_progress").length,
     resolved: items.filter((r) => r.status === "resolved").length,
     wont_fix: items.filter((r) => r.status === "wont_fix").length,
+    shipped: items.filter((r) => !!r.shipped_at).length,
   };
 
   return (
@@ -128,11 +134,13 @@ function RequestsPage() {
       <header>
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Admin</p>
         <h1 className="font-display text-4xl tracking-tight mt-1">Client requests</h1>
-        <p className="text-muted-foreground mt-2">Bug reports and feature requests from the team.</p>
+        <p className="text-muted-foreground mt-2">
+          Bug reports and feature requests from the team. Mark items as shipped and attach the commit or PR that delivered the fix.
+        </p>
       </header>
 
       <div className="flex flex-wrap gap-2">
-        {(["all", "new", "in_progress", "resolved", "wont_fix"] as const).map((s) => (
+        {(["all", "new", "in_progress", "resolved", "shipped", "wont_fix"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -142,7 +150,7 @@ function RequestsPage() {
                 : "bg-card text-foreground border-border hover:bg-muted"
             }`}
           >
-            {s === "all" ? "All" : STATUS_LABEL[s]} · {counts[s]}
+            {s === "all" ? "All" : s === "shipped" ? "Shipped" : STATUS_LABEL[s]} · {counts[s]}
           </button>
         ))}
       </div>
@@ -150,7 +158,11 @@ function RequestsPage() {
       {isLoading ? (
         <p className="text-muted-foreground">Loading requests…</p>
       ) : filtered.length === 0 ? (
-        <Card className="p-10 text-center text-muted-foreground">No requests in this view.</Card>
+        <Card className="p-10 text-center text-muted-foreground">
+          {items.length === 0
+            ? "No requests yet. Use the feedback button (bottom-right of any page) to file the first one."
+            : "No requests in this view."}
+        </Card>
       ) : (
         <div className="space-y-3">
           {filtered.map((r) => {
