@@ -34,6 +34,8 @@ function NewProposalPage() {
   const [parsing, setParsing] = useState(false);
   const [parsed, setParsed] = useState<ParsedEstimate | null>(null);
   const [pdfText, setPdfText] = useState<string>("");
+  const [dragOver, setDragOver] = useState(false);
+
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients", user?.id],
@@ -185,7 +187,21 @@ function NewProposalPage() {
           <p className="text-xs text-muted-foreground">Manage clients on the <Link to="/clients" className="underline">Clients</Link> page.</p>
         </div>
 
-        <div className="rounded-xl border border-dashed border-border bg-card p-6">
+        <div
+          className={`rounded-xl border-dashed border bg-card p-6 transition-colors ${dragOver ? "border-accent bg-accent/5 ring-2 ring-accent/30" : "border-border"}`}
+          onDragOver={(e) => { e.preventDefault(); if (!parsing) setDragOver(true); }}
+          onDragEnter={(e) => { e.preventDefault(); if (!parsing) setDragOver(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            if (parsing) return;
+            const f = Array.from(e.dataTransfer.files).find((file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
+            if (f) handlePdf(f);
+            else if (e.dataTransfer.files.length) toast.error("Drop a PDF file");
+          }}
+        >
+
           <div className="flex items-start gap-4">
             <div className="h-10 w-10 grid place-items-center rounded-md bg-accent/15 text-accent">
               <FileUp className="h-5 w-5" />
@@ -193,7 +209,7 @@ function NewProposalPage() {
             <div className="flex-1">
               <h3 className="font-medium">Import a CONTI estimate PDF</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                We'll extract sections and line items (Qty, Make, Model, Description, Unit Price) and pre-load them into your proposal.
+                Drag &amp; drop a PDF anywhere in this box, or choose a file. We'll extract sections and line items (Qty, Make, Model, Description, Unit Price) and pre-load them into your proposal.
               </p>
               <div className="mt-4">
                 <Input
