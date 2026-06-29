@@ -379,24 +379,44 @@ function parseConti(text: string): ParsedEstimate {
       continue;
     }
 
-    const rowMatch = ln.match(/^(\d{1,3})\s+(.+)$/);
+    // Tab-delimited row from coordinate-aware extraction. Identify columns by
+    // splitting on tabs. Treat any column that looks like money as a price; the
+    // last two money-shaped columns are unit + extended price.
+    const rowMatch = ln.match(/^(\d{1,3})[\s\t]+(.+)$/);
     if (rowMatch) {
       const qty = parseInt(rowMatch[1], 10);
       const rest = rowMatch[2];
-      const monies = Array.from(rest.matchAll(moneyTok)).map((m) => parseFloat(m[1].replace(/,/g, "")));
-      const unit = monies.length >= 2 ? monies[monies.length - 2] : monies[0] ?? 0;
-      const stripped = rest.replace(moneyTok, "").trim();
-      const tokens = stripped.split(/\s{2,}|\t+/).filter(Boolean);
-      const [make = "", model = "", ...descParts] = tokens;
-      const description = descParts.join(" ").trim() || tokens.slice(2).join(" ");
+      const cols = rest.split(/\t+|\s{2,}/).map((c) => c.trim()).filter(Boolean);
+
+      const isMoney = (s: string) => /^-?\$?\s?-?[\d,]+\.\d{2}$/.test(s.replace(/\s/g, ""));
+      const toNum = (s: string) => parseFloat(s.replace(/[^\d.\-]/g, "")) || 0;
+
+      // Pull trailing prices off the row.
+      const prices: number[] = [];
+      while (cols.length && isMoney(cols[cols.length - 1])) {
+        prices.unshift(toNum(cols.pop()!));
+      }
+
+      let unit = 0;
+      if (prices.length >= 2) unit = prices[prices.length - 2];
+      else if (prices.length === 1) unit = prices[0];
+      else {
+        // Fallback: regex-scan the whole row for money tokens.
+        const inline = Array.from(rest.matchAll(moneyTok)).map((m) => toNum(m[1]));
+        if (inline.length >= 2) unit = inline[inline.length - 2];
+        else if (inline.length === 1) unit = inline[0];
+      }
+
+      const [make = "", model = "", ...descParts] = cols;
+      const description = descParts.join(" ").trim();
 
       const item = {
         id: crypto.randomUUID(),
         qty,
-        make: make || "",
-        model: model || "",
-        description: description || stripped,
-        unit_price: unit || 0,
+        make,
+        model,
+        description: description || (cols.length ? cols.join(" ") : ""),
+        unit_price: unit,
       };
       if (!current) {
         current = { id: crypto.randomUUID(), name: "Equipment", items: [] };
