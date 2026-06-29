@@ -21,7 +21,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     ...(isAdmin ? [
       { to: "/admin", label: "Admin", icon: ShieldCheck },
       { to: "/admin/products", label: "Products", icon: Package },
-      { to: "/admin/integrations", label: "Integrations", icon: Plug },
       { to: "/admin/requests", label: "Requests", icon: Inbox },
     ] : []),
   ];
