@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate, Link, useParams } from "@tanstack/react-r
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import {
-  ArrowLeft, Save, Eye, Printer, History, Trash2, Plus, GripVertical, X,
+  ArrowLeft, Save, Eye, Printer, History, Trash2, Plus, GripVertical, X, Sparkles, Library, Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -14,10 +15,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ProposalDocument } from "@/components/proposal-document";
 import { calcLineItemsTotal, STANDARD_TERMS } from "@/lib/proposal-defaults";
 import { money } from "@/lib/format";
-import type { ProposalContent, ProposalRow, ProposalStatus, LineItem, LineSection } from "@/lib/proposal-types";
+import { lookupClient } from "@/lib/client-lookup.functions";
+import type { ProposalContent, ProposalRow, ProposalStatus, LineItem, LineSection, FeaturedProduct } from "@/lib/proposal-types";
 
 export const Route = createFileRoute("/_authenticated/proposals/$proposalId")({
   component: EditorPage,
