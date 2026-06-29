@@ -108,6 +108,28 @@ function ConnectionsPage() {
         </p>
       </header>
 
+      <section className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-accent" />
+            <h2 className="font-display text-lg">Workspace integrations</h2>
+          </div>
+          {isAdmin && (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/integrations">Manage <ExternalLink className="h-3 w-3" /></Link>
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Shared connections wired up once by your admin — available to every rep automatically.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <WorkspaceBadge name="Zoho Books" connected={workspace?.zoho_books ?? false} />
+          <WorkspaceBadge name="Zoho CRM" connected={workspace?.zoho_crm ?? false} />
+        </div>
+      </section>
+
+
       <div className="grid gap-5">
         {PROVIDERS.map((p) => {
           const linked = byProvider(p.id);
