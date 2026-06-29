@@ -45,6 +45,21 @@ export function makeDefaultContent(overrides: Partial<ProposalContent["cover"]> 
         "End-user training and handover documentation",
       ],
     },
+    client_spotlight: {
+      enabled: false,
+      logo_url: "",
+      industry: "",
+      hq: "",
+      size: "",
+      about: "",
+      challenge: "",
+      why_us: "",
+    },
+    featured_products: {
+      enabled: false,
+      intro: "Hand-picked solutions central to this design.",
+      products: [],
+    },
     line_items: {
       enabled: true,
       sections: [
