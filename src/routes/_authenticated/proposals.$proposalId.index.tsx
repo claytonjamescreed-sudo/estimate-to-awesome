@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/proposals/$proposalId/")({
 });
 
 function EditorPage() {
-  const { proposalId } = useParams({ from: "/_authenticated/proposals/$proposalId" });
+  const { proposalId } = useParams({ from: "/_authenticated/proposals/$proposalId/" });
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -196,17 +196,10 @@ function EditorPage() {
               <RevisionList proposalId={proposalId} />
             </SheetContent>
           </Sheet>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const url = `/proposals/${proposalId}/preview`;
-              const win = window.open(url, "_blank", "noopener,noreferrer");
-              // Sandboxed previews can block popups — fall back to same-tab nav
-              if (!win) navigate({ to: "/proposals/$proposalId/preview", params: { proposalId } });
-            }}
-          >
-            <Eye className="h-4 w-4" /> Preview
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/proposals/$proposalId/preview" params={{ proposalId }} target="_blank" rel="noopener noreferrer">
+              <Eye className="h-4 w-4" /> Preview PDF
+            </Link>
           </Button>
           <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading} title="Download PDF">
             {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
