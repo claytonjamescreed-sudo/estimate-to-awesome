@@ -26,7 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Wand2 } from "lucide-react";
 import type { ProposalContent, ProposalRow, ProposalStatus, LineItem, LineSection, FeaturedProduct } from "@/lib/proposal-types";
 
-export const Route = createFileRoute("/_authenticated/proposals/$proposalId")({
+export const Route = createFileRoute("/_authenticated/proposals/$proposalId/")({
   component: EditorPage,
 });
 
