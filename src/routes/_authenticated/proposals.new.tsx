@@ -187,8 +187,9 @@ function NewProposalPage() {
           <p className="text-xs text-muted-foreground">Manage clients on the <Link to="/clients" className="underline">Clients</Link> page.</p>
         </div>
 
-        <div
-          className={`rounded-xl border-dashed border bg-card p-6 transition-colors ${dragOver ? "border-accent bg-accent/5 ring-2 ring-accent/30" : "border-border"}`}
+        <label
+          htmlFor="pdf-upload"
+          className={`group relative block cursor-pointer rounded-xl border-2 border-dashed bg-card p-10 text-center transition-all ${dragOver ? "border-accent bg-accent/10 ring-4 ring-accent/20 scale-[1.01]" : "border-border hover:border-accent/60 hover:bg-accent/5"} ${parsing ? "pointer-events-none opacity-70" : ""}`}
           onDragOver={(e) => { e.preventDefault(); if (!parsing) setDragOver(true); }}
           onDragEnter={(e) => { e.preventDefault(); if (!parsing) setDragOver(true); }}
           onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
@@ -201,42 +202,48 @@ function NewProposalPage() {
             else if (e.dataTransfer.files.length) toast.error("Drop a PDF file");
           }}
         >
-
-          <div className="flex items-start gap-4">
-            <div className="h-10 w-10 grid place-items-center rounded-md bg-accent/15 text-accent">
-              <FileUp className="h-5 w-5" />
+          <div className="flex flex-col items-center gap-3">
+            <div className={`h-16 w-16 grid place-items-center rounded-full transition-all ${dragOver ? "bg-accent text-accent-foreground scale-110" : "bg-accent/15 text-accent group-hover:scale-105"}`}>
+              <UploadCloud className="h-8 w-8" />
             </div>
-            <div className="flex-1">
-              <h3 className="font-medium">Import a CONTI estimate PDF</h3>
+            <div>
+              <h3 className="font-display text-xl">
+                {dragOver ? "Drop your PDF to import" : "Drag & drop your estimate PDF here"}
+              </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Drag &amp; drop a PDF anywhere in this box, or choose a file. We'll extract sections and line items (Qty, Make, Model, Description, Unit Price) and pre-load them into your proposal.
+                or <span className="text-accent font-medium underline underline-offset-2">click anywhere to browse</span> · PDF only
               </p>
-              <div className="mt-4">
-                <Input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePdf(f); }}
-                  disabled={parsing}
-                />
-              </div>
-              {parsing && (
-                <p className="mt-3 text-sm text-muted-foreground inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Parsing PDF…
-                </p>
-              )}
-              {parsed && (
-                <div className="mt-4 rounded-md bg-muted/50 p-3 text-sm">
-                  <p className="font-medium">Parsed preview</p>
-                  <ul className="mt-2 space-y-1 text-muted-foreground">
-                    {parsed.sections.map((s) => (
-                      <li key={s.id}>· <span className="text-foreground">{s.name}</span> — {s.items.length} item{s.items.length === 1 ? "" : "s"}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
+            <p className="text-xs text-muted-foreground max-w-md">
+              We'll extract sections and line items (Qty, Make, Model, Description, Unit Price) and pre-load them into your proposal.
+            </p>
           </div>
-        </div>
+          <input
+            id="pdf-upload"
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePdf(f); }}
+            disabled={parsing}
+            className="sr-only"
+          />
+        </label>
+
+        {parsing && (
+          <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" /> Parsing PDF…
+          </p>
+        )}
+        {parsed && (
+          <div className="rounded-md border border-border bg-muted/50 p-4 text-sm">
+            <p className="font-medium inline-flex items-center gap-2"><FileText className="h-4 w-4 text-accent" /> Parsed preview</p>
+            <ul className="mt-2 space-y-1 text-muted-foreground">
+              {parsed.sections.map((s) => (
+                <li key={s.id}>· <span className="text-foreground">{s.name}</span> — {s.items.length} item{s.items.length === 1 ? "" : "s"}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
 
         <details className="rounded-md border border-border bg-card p-4 open:pb-5">
           <summary className="cursor-pointer text-sm font-medium">Optional pasted text (no PDF)</summary>
