@@ -1,4 +1,4 @@
-import type { ProposalContent } from "@/lib/proposal-types";
+import type { LineItem, LineSection, ProposalContent } from "@/lib/proposal-types";
 import { money, shortDate } from "@/lib/format";
 import { tenant } from "@/config/tenant";
 
