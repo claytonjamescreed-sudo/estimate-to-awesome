@@ -184,14 +184,15 @@ function ConnectDialog({
   const [saving, setSaving] = useState(false);
 
   if (!provider) return null;
-  const info = PROVIDERS.find((p) => p.id === provider)!;
+  const activeProvider: Provider = provider;
+  const info = PROVIDERS.find((p) => p.id === activeProvider)!;
 
   async function save() {
     setSaving(true);
     try {
       const { error } = await supabase.from("user_integrations").insert({
         user_id: (await supabase.auth.getUser()).data.user!.id,
-        provider,
+        provider: activeProvider,
         account_label: label || null,
         account_email: email || null,
         status: "pending_oauth",
