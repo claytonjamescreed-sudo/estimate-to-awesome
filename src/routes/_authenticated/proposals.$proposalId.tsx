@@ -20,6 +20,9 @@ import { ProposalDocument } from "@/components/proposal-document";
 import { calcLineItemsTotal, STANDARD_TERMS } from "@/lib/proposal-defaults";
 import { money } from "@/lib/format";
 import { lookupClient } from "@/lib/client-lookup.functions";
+import { enrichProduct } from "@/lib/product-enrich.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Wand2 } from "lucide-react";
 import type { ProposalContent, ProposalRow, ProposalStatus, LineItem, LineSection, FeaturedProduct } from "@/lib/proposal-types";
 
 export const Route = createFileRoute("/_authenticated/proposals/$proposalId")({
