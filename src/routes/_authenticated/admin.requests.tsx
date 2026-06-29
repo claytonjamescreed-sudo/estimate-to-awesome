@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Bug, Sparkles, HelpCircle, Trash2, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bug, Sparkles, HelpCircle, Trash2, ExternalLink, CheckCircle2, GitCommit } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/requests")({
   component: RequestsPage,
@@ -34,6 +35,8 @@ interface Req {
   page_url: string | null;
   status: Status;
   admin_notes: string | null;
+  shipped_at: string | null;
+  commit_ref: string | null;
   created_at: string;
 }
 
@@ -60,7 +63,7 @@ const TYPE_ICON: Record<ReqType, typeof Bug> = {
 function RequestsPage() {
   const { isAdmin, loading } = useAuth();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<Status | "all">("all");
+  const [filter, setFilter] = useState<Status | "all" | "shipped">("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["client_requests"],
@@ -111,13 +114,19 @@ function RequestsPage() {
   }
 
   const items = data ?? [];
-  const filtered = filter === "all" ? items : items.filter((r) => r.status === filter);
+  const filtered =
+    filter === "all"
+      ? items
+      : filter === "shipped"
+        ? items.filter((r) => !!r.shipped_at)
+        : items.filter((r) => r.status === filter);
   const counts = {
     all: items.length,
     new: items.filter((r) => r.status === "new").length,
     in_progress: items.filter((r) => r.status === "in_progress").length,
     resolved: items.filter((r) => r.status === "resolved").length,
     wont_fix: items.filter((r) => r.status === "wont_fix").length,
+    shipped: items.filter((r) => !!r.shipped_at).length,
   };
 
   return (
@@ -125,11 +134,13 @@ function RequestsPage() {
       <header>
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Admin</p>
         <h1 className="font-display text-4xl tracking-tight mt-1">Client requests</h1>
-        <p className="text-muted-foreground mt-2">Bug reports and feature requests from the team.</p>
+        <p className="text-muted-foreground mt-2">
+          Bug reports and feature requests from the team. Mark items as shipped and attach the commit or PR that delivered the fix.
+        </p>
       </header>
 
       <div className="flex flex-wrap gap-2">
-        {(["all", "new", "in_progress", "resolved", "wont_fix"] as const).map((s) => (
+        {(["all", "new", "in_progress", "resolved", "shipped", "wont_fix"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -139,7 +150,7 @@ function RequestsPage() {
                 : "bg-card text-foreground border-border hover:bg-muted"
             }`}
           >
-            {s === "all" ? "All" : STATUS_LABEL[s]} · {counts[s]}
+            {s === "all" ? "All" : s === "shipped" ? "Shipped" : STATUS_LABEL[s]} · {counts[s]}
           </button>
         ))}
       </div>
@@ -147,7 +158,11 @@ function RequestsPage() {
       {isLoading ? (
         <p className="text-muted-foreground">Loading requests…</p>
       ) : filtered.length === 0 ? (
-        <Card className="p-10 text-center text-muted-foreground">No requests in this view.</Card>
+        <Card className="p-10 text-center text-muted-foreground">
+          {items.length === 0
+            ? "No requests yet. Use the feedback button (bottom-right of any page) to file the first one."
+            : "No requests in this view."}
+        </Card>
       ) : (
         <div className="space-y-3">
           {filtered.map((r) => {
@@ -165,6 +180,11 @@ function RequestsPage() {
                         {STATUS_LABEL[r.status]}
                       </Badge>
                       <Badge variant="outline" className="text-xs">{r.type}</Badge>
+                      {r.shipped_at && (
+                        <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/40 text-xs inline-flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" /> Shipped {new Date(r.shipped_at).toLocaleDateString()}
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
                       {r.description}
@@ -220,6 +240,49 @@ function RequestsPage() {
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
+
+                    <div className="mt-3 grid sm:grid-cols-[1fr_auto] gap-3 items-center">
+                      <div className="relative">
+                        <GitCommit className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          defaultValue={r.commit_ref ?? ""}
+                          placeholder="Commit SHA, PR link, or deploy ref…"
+                          className="h-9 pl-9 text-xs"
+                          onBlur={(e) => {
+                            const v = e.target.value.trim();
+                            if (v !== (r.commit_ref ?? "")) {
+                              updateMut.mutate({ id: r.id, patch: { commit_ref: v || null } });
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant={r.shipped_at ? "outline" : "default"}
+                        size="sm"
+                        onClick={() =>
+                          updateMut.mutate({
+                            id: r.id,
+                            patch: {
+                              shipped_at: r.shipped_at ? null : new Date().toISOString(),
+                              status: r.shipped_at ? r.status : "resolved",
+                            },
+                          })
+                        }
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                        {r.shipped_at ? "Unmark shipped" : "Mark as shipped"}
+                      </Button>
+                    </div>
+                    {r.commit_ref && /^https?:\/\//.test(r.commit_ref) && (
+                      <a
+                        href={r.commit_ref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <ExternalLink className="h-3 w-3" /> Open commit/PR
+                      </a>
+                    )}
                   </div>
                 </div>
               </Card>
