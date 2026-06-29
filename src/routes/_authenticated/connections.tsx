@@ -62,9 +62,15 @@ interface UserIntegrationRow {
 }
 
 function ConnectionsPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [connecting, setConnecting] = useState<Provider | null>(null);
+
+  const fetchWorkspace = useServerFn(getWorkspaceIntegrationStatus);
+  const { data: workspace } = useQuery({
+    queryKey: ["workspace_integration_status"],
+    queryFn: () => fetchWorkspace(),
+  });
 
   const { data: integrations = [], isLoading } = useQuery({
     queryKey: ["user_integrations", user?.id],
