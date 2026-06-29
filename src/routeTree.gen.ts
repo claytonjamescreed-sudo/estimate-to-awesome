@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as AuthenticatedAdminIntegrationsRouteImport } from './routes/_authenticated/admin.integrations'
 import { Route as AuthenticatedProposalsProposalIdPreviewRouteImport } from './routes/_authenticated/proposals.$proposalId.preview'
+import { Route as ApiPublicOauthGoogleCallbackRouteImport } from './routes/api/public/oauth/google.callback'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -101,6 +102,12 @@ const AuthenticatedProposalsProposalIdPreviewRoute =
     path: '/preview',
     getParentRoute: () => AuthenticatedProposalsProposalIdRoute,
   } as any)
+const ApiPublicOauthGoogleCallbackRoute =
+  ApiPublicOauthGoogleCallbackRouteImport.update({
+    id: '/api/public/oauth/google/callback',
+    path: '/api/public/oauth/google/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/proposals/new': typeof AuthenticatedProposalsNewRoute
   '/proposals/': typeof AuthenticatedProposalsIndexRoute
   '/proposals/$proposalId/preview': typeof AuthenticatedProposalsProposalIdPreviewRoute
+  '/api/public/oauth/google/callback': typeof ApiPublicOauthGoogleCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -131,6 +139,7 @@ export interface FileRoutesByTo {
   '/proposals/new': typeof AuthenticatedProposalsNewRoute
   '/proposals': typeof AuthenticatedProposalsIndexRoute
   '/proposals/$proposalId/preview': typeof AuthenticatedProposalsProposalIdPreviewRoute
+  '/api/public/oauth/google/callback': typeof ApiPublicOauthGoogleCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -148,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/proposals/new': typeof AuthenticatedProposalsNewRoute
   '/_authenticated/proposals/': typeof AuthenticatedProposalsIndexRoute
   '/_authenticated/proposals/$proposalId/preview': typeof AuthenticatedProposalsProposalIdPreviewRoute
+  '/api/public/oauth/google/callback': typeof ApiPublicOauthGoogleCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/proposals/new'
     | '/proposals/'
     | '/proposals/$proposalId/preview'
+    | '/api/public/oauth/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/proposals/new'
     | '/proposals'
     | '/proposals/$proposalId/preview'
+    | '/api/public/oauth/google/callback'
   id:
     | '__root__'
     | '/'
@@ -196,12 +208,14 @@ export interface FileRouteTypes {
     | '/_authenticated/proposals/new'
     | '/_authenticated/proposals/'
     | '/_authenticated/proposals/$proposalId/preview'
+    | '/api/public/oauth/google/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicOauthGoogleCallbackRoute: typeof ApiPublicOauthGoogleCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -304,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProposalsProposalIdPreviewRouteImport
       parentRoute: typeof AuthenticatedProposalsProposalIdRoute
     }
+    '/api/public/oauth/google/callback': {
+      id: '/api/public/oauth/google/callback'
+      path: '/api/public/oauth/google/callback'
+      fullPath: '/api/public/oauth/google/callback'
+      preLoaderRoute: typeof ApiPublicOauthGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -365,6 +386,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicOauthGoogleCallbackRoute: ApiPublicOauthGoogleCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
