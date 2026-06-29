@@ -34,6 +34,8 @@ function NewProposalPage() {
   const [parsing, setParsing] = useState(false);
   const [parsed, setParsed] = useState<ParsedEstimate | null>(null);
   const [pdfText, setPdfText] = useState<string>("");
+  const [dragOver, setDragOver] = useState(false);
+
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients", user?.id],
