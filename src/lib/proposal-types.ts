@@ -15,6 +15,26 @@ export interface LineSection {
   items: LineItem[];
 }
 
+export interface FeaturedProduct {
+  id: string;
+  name: string;
+  tagline: string;
+  image_url: string;
+  highlights: string[]; // bullet list of key specs / benefits
+  link: string;
+}
+
+export interface ClientSpotlight {
+  enabled: boolean;
+  logo_url: string;
+  industry: string;
+  hq: string;
+  size: string;
+  about: string;
+  challenge: string;
+  why_us: string;
+}
+
 export interface ProposalContent {
   cover: {
     enabled: boolean;
