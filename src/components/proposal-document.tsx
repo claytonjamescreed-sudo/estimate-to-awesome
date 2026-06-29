@@ -22,6 +22,11 @@ export function ProposalDocument({ content, currency, totals }: Props) {
           <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-ink/85">{content.exec_summary.body}</p>
         </BodyPage>
       )}
+      {content.client_spotlight?.enabled && (
+        <BodyPage title="Client Spotlight" subtitle={content.cover.client_name}>
+          <ClientSpotlightBlock content={content} />
+        </BodyPage>
+      )}
       {content.scope.enabled && (
         <BodyPage title="Scope of Work" subtitle={content.cover.client_name}>
           <ul className="space-y-3">
@@ -32,6 +37,38 @@ export function ProposalDocument({ content, currency, totals }: Props) {
               </li>
             ))}
           </ul>
+        </BodyPage>
+      )}
+      {content.featured_products?.enabled && content.featured_products.products.length > 0 && (
+        <BodyPage title="Featured Products" subtitle={content.cover.client_name}>
+          {content.featured_products.intro && (
+            <p className="text-[14px] text-ink/75 mb-6 max-w-2xl">{content.featured_products.intro}</p>
+          )}
+          <div className="grid grid-cols-2 gap-5">
+            {content.featured_products.products.map((p) => (
+              <div key={p.id} className="rounded-lg border border-ink/15 overflow-hidden flex flex-col">
+                {p.image_url && (
+                  <div className="aspect-[4/3] bg-ink/5 overflow-hidden">
+                    <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="p-4 flex-1 flex flex-col">
+                  <h3 className="font-display text-lg text-ink leading-tight">{p.name}</h3>
+                  {p.tagline && <p className="text-[12px] uppercase tracking-wider text-accent mt-1">{p.tagline}</p>}
+                  {p.highlights.filter(Boolean).length > 0 && (
+                    <ul className="mt-3 space-y-1.5 text-[13px] text-ink/80">
+                      {p.highlights.filter(Boolean).map((h, i) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="mt-1.5 h-1 w-1 rounded-full bg-accent shrink-0" /><span>{h}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {p.link && <p className="mt-3 text-[11px] text-ink/50 truncate">{p.link}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
         </BodyPage>
       )}
       {content.line_items.enabled && (
