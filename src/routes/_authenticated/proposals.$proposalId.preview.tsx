@@ -18,13 +18,6 @@ function safeFilename(s: string) {
   return (s || "proposal").replace(/[^a-z0-9-_]+/gi, "_").replace(/^_+|_+$/g, "") + ".pdf";
 }
 
-type PdfPagePreview = {
-  pageNumber: number;
-  imageUrl: string;
-  width: number;
-  height: number;
-};
-
 function PreviewPage() {
   const { proposalId } = useParams({ from: "/_authenticated/proposals/$proposalId/preview" });
   const { data, isLoading } = useQuery({
