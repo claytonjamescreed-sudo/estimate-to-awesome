@@ -63,7 +63,7 @@ const TYPE_ICON: Record<ReqType, typeof Bug> = {
 function RequestsPage() {
   const { isAdmin, loading } = useAuth();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<Status | "all">("all");
+  const [filter, setFilter] = useState<Status | "all" | "shipped">("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["client_requests"],
