@@ -224,3 +224,49 @@ function BrandMark({ light = false }: { light?: boolean }) {
     </div>
   );
 }
+
+function ClientSpotlightBlock({ content }: { content: ProposalContent }) {
+  const c = content.client_spotlight;
+  const facts = [
+    { label: "Industry", value: c.industry },
+    { label: "Headquarters", value: c.hq },
+    { label: "Size", value: c.size },
+  ].filter((f) => f.value);
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start gap-6">
+        {c.logo_url && (
+          <div className="h-20 w-20 rounded-md bg-ink/5 border border-ink/10 overflow-hidden flex items-center justify-center shrink-0">
+            <img src={c.logo_url} alt="" className="max-h-full max-w-full object-contain p-2" />
+          </div>
+        )}
+        <div className="flex-1">
+          <h3 className="font-display text-2xl text-ink">{content.cover.client_name || "Client"}</h3>
+          {c.about && <p className="mt-2 text-[14px] text-ink/80 leading-relaxed">{c.about}</p>}
+        </div>
+      </div>
+      {facts.length > 0 && (
+        <div className="grid grid-cols-3 gap-4 border-y border-ink/10 py-4">
+          {facts.map((f) => (
+            <div key={f.label}>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-ink/50">{f.label}</p>
+              <p className="text-[14px] text-ink mt-1">{f.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {c.challenge && (
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-accent mb-1.5">The Challenge</p>
+          <p className="text-[14px] text-ink/85 leading-relaxed whitespace-pre-wrap">{c.challenge}</p>
+        </div>
+      )}
+      {c.why_us && (
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-accent mb-1.5">Why GOSAVI</p>
+          <p className="text-[14px] text-ink/85 leading-relaxed whitespace-pre-wrap">{c.why_us}</p>
+        </div>
+      )}
+    </div>
+  );
+}
