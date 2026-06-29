@@ -43,7 +43,7 @@ async function renderPdfPages(blob: Blob): Promise<PdfPagePreview[]> {
 
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
-    await page.render({ canvasContext: context, viewport }).promise;
+    await page.render({ canvas, canvasContext: context, viewport }).promise;
     pages.push({
       pageNumber,
       imageUrl: canvas.toDataURL("image/jpeg", 0.92),
@@ -52,7 +52,7 @@ async function renderPdfPages(blob: Blob): Promise<PdfPagePreview[]> {
     });
   }
 
-  await pdf.destroy();
+  await pdf.cleanup();
   return pages;
 }
 
