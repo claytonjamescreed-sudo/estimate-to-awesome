@@ -50,34 +50,49 @@ function NewProposalPage() {
   async function handlePdf(file: File) {
     setParsing(true);
     try {
-      // Lazy-load pdf.js (legacy build) so the bundle stays slim until first use.
       const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
       const worker = (await import("pdfjs-dist/legacy/build/pdf.worker.mjs?url")).default;
       pdfjs.GlobalWorkerOptions.workerSrc = worker;
 
       const buf = await file.arrayBuffer();
       const doc = await pdfjs.getDocument({ data: buf }).promise;
+
+      // Reconstruct rows using X/Y coordinates. Items within a horizontal gap of
+      // > GAP_X get separated by a tab so downstream code can split into columns.
+      const Y_TOL = 3;
+      const GAP_X = 8;
       let text = "";
       for (let p = 1; p <= doc.numPages; p++) {
         const page = await doc.getPage(p);
         const content = await page.getTextContent();
-        const items = content.items as Array<{ str: string; transform: number[] }>;
-        // Group by y to reconstruct lines.
-        const lines = new Map<number, string[]>();
+        type Item = { str: string; transform: number[]; width?: number };
+        const items = (content.items as Item[]).filter((i) => i.str && i.str.trim());
+
+        const rowMap = new Map<number, Item[]>();
         for (const it of items) {
-          const y = Math.round(it.transform[5]);
-          const arr = lines.get(y) ?? [];
-          arr.push(it.str);
-          lines.set(y, arr);
+          const key = Math.round(it.transform[5] / Y_TOL) * Y_TOL;
+          (rowMap.get(key) ?? rowMap.set(key, []).get(key)!).push(it);
         }
-        const sortedYs = Array.from(lines.keys()).sort((a, b) => b - a);
-        text += sortedYs.map((y) => lines.get(y)!.join(" ").trim()).join("\n") + "\n\n";
+        const sortedYs = Array.from(rowMap.keys()).sort((a, b) => b - a);
+        for (const y of sortedYs) {
+          const row = rowMap.get(y)!.sort((a, b) => a.transform[4] - b.transform[4]);
+          let line = "";
+          let prevEndX = -Infinity;
+          for (const it of row) {
+            const x = it.transform[4];
+            const w = it.width ?? it.str.length * 4;
+            if (line === "") line = it.str;
+            else if (x - prevEndX > GAP_X) line += "\t" + it.str;
+            else line += (it.str.startsWith(" ") || line.endsWith(" ") ? "" : " ") + it.str;
+            prevEndX = x + w;
+          }
+          text += line.trim() + "\n";
+        }
+        text += "\n";
       }
       setPdfText(text);
       const result = parseConti(text);
       setParsed(result);
-      // Auto-fill the form from the parsed estimate. Overwrite empty fields;
-      // never clobber values the user has already typed.
       if (result.project_name) setTitle((t) => t.trim() ? t : result.project_name!);
       if (result.reference) setProjectCode((c) => c.trim() ? c : result.reference!);
       if (result.client_name) setPreparedFor((p) => p.trim() ? p : result.client_name!);
@@ -364,24 +379,44 @@ function parseConti(text: string): ParsedEstimate {
       continue;
     }
 
-    const rowMatch = ln.match(/^(\d{1,3})\s+(.+)$/);
+    // Tab-delimited row from coordinate-aware extraction. Identify columns by
+    // splitting on tabs. Treat any column that looks like money as a price; the
+    // last two money-shaped columns are unit + extended price.
+    const rowMatch = ln.match(/^(\d{1,3})[\s\t]+(.+)$/);
     if (rowMatch) {
       const qty = parseInt(rowMatch[1], 10);
       const rest = rowMatch[2];
-      const monies = Array.from(rest.matchAll(moneyTok)).map((m) => parseFloat(m[1].replace(/,/g, "")));
-      const unit = monies.length >= 2 ? monies[monies.length - 2] : monies[0] ?? 0;
-      const stripped = rest.replace(moneyTok, "").trim();
-      const tokens = stripped.split(/\s{2,}|\t+/).filter(Boolean);
-      const [make = "", model = "", ...descParts] = tokens;
-      const description = descParts.join(" ").trim() || tokens.slice(2).join(" ");
+      const cols = rest.split(/\t+|\s{2,}/).map((c) => c.trim()).filter(Boolean);
+
+      const isMoney = (s: string) => /^-?\$?\s?-?[\d,]+\.\d{2}$/.test(s.replace(/\s/g, ""));
+      const toNum = (s: string) => parseFloat(s.replace(/[^\d.\-]/g, "")) || 0;
+
+      // Pull trailing prices off the row.
+      const prices: number[] = [];
+      while (cols.length && isMoney(cols[cols.length - 1])) {
+        prices.unshift(toNum(cols.pop()!));
+      }
+
+      let unit = 0;
+      if (prices.length >= 2) unit = prices[prices.length - 2];
+      else if (prices.length === 1) unit = prices[0];
+      else {
+        // Fallback: regex-scan the whole row for money tokens.
+        const inline = Array.from(rest.matchAll(moneyTok)).map((m) => toNum(m[1]));
+        if (inline.length >= 2) unit = inline[inline.length - 2];
+        else if (inline.length === 1) unit = inline[0];
+      }
+
+      const [make = "", model = "", ...descParts] = cols;
+      const description = descParts.join(" ").trim();
 
       const item = {
         id: crypto.randomUUID(),
         qty,
-        make: make || "",
-        model: model || "",
-        description: description || stripped,
-        unit_price: unit || 0,
+        make,
+        model,
+        description: description || (cols.length ? cols.join(" ") : ""),
+        unit_price: unit,
       };
       if (!current) {
         current = { id: crypto.randomUUID(), name: "Equipment", items: [] };
