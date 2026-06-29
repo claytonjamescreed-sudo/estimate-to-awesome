@@ -35,6 +35,8 @@ interface Req {
   page_url: string | null;
   status: Status;
   admin_notes: string | null;
+  shipped_at: string | null;
+  commit_ref: string | null;
   created_at: string;
 }
 
