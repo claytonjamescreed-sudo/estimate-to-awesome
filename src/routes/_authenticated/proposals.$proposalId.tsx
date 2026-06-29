@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ArrowLeft, Save, Eye, Printer, History, Trash2, Plus, GripVertical, X, Sparkles, Library, Loader2,
+  ArrowLeft, Save, Eye, Download, History, Trash2, Plus, GripVertical, X, Sparkles, Library, Loader2,
 } from "lucide-react";
+import { generateProposalPdf, downloadBlob } from "@/lib/generate-pdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
