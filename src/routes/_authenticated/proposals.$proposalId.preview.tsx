@@ -30,7 +30,6 @@ function PreviewPage() {
   });
 
   const docRef = useRef<HTMLDivElement>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [building, setBuilding] = useState(false);
 
@@ -38,7 +37,7 @@ function PreviewPage() {
 
   // Generate PDF as soon as the document is rendered
   useEffect(() => {
-    if (!data || !docRef.current || pdfUrl) return;
+    if (!data || !docRef.current || pdfBlob) return;
     let cancelled = false;
     setBuilding(true);
     // Defer one tick so fonts & images settle
@@ -47,9 +46,7 @@ function PreviewPage() {
         await (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
         const blob = await generateProposalPdf(docRef.current!);
         if (cancelled) return;
-        const url = URL.createObjectURL(blob);
         setPdfBlob(blob);
-        setPdfUrl(url);
       } catch (e) {
         console.error(e);
         toast.error("Couldn't build the PDF preview. Try again.");
@@ -58,9 +55,7 @@ function PreviewPage() {
       }
     }, 200);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [data, pdfUrl]);
-
-  useEffect(() => () => { if (pdfUrl) URL.revokeObjectURL(pdfUrl); }, [pdfUrl]);
+  }, [data, pdfBlob]);
 
   const handleDownload = () => {
     if (!pdfBlob || !data) return;
@@ -89,16 +84,11 @@ function PreviewPage() {
         </div>
       </div>
 
-      {/* In-browser PDF viewer */}
-      <div className="flex-1 relative">
-        {pdfUrl ? (
-          <iframe title="Proposal PDF" src={pdfUrl} className="w-full h-[calc(100vh-57px)] border-0 bg-white" />
-        ) : (
-          <div className="flex items-center justify-center py-20 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            Building PDF preview…
-          </div>
-        )}
+      {/* In-app proposal preview. Avoids Chrome's blocked embedded PDF viewer. */}
+      <div className="flex-1 relative bg-neutral-200 overflow-auto h-[calc(100vh-57px)]">
+        <div className="mx-auto w-fit max-w-full px-4 py-8">
+          <ProposalDocument content={data.content} currency={data.currency} totals={totals} />
+        </div>
       </div>
 
       {/* Off-screen render source — used by html2canvas, not shown to the user */}
