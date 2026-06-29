@@ -46,30 +46,22 @@ export function ProposalDocument({ content, currency, totals }: Props) {
           )}
           <div className="space-y-5">
             {content.featured_products.products.map((p) => (
-              <div key={p.id} className="rounded-lg border border-ink/15 overflow-hidden grid grid-cols-[200px_1fr]">
-                {p.image_url ? (
-                  <div className="bg-white border-r border-ink/10 flex items-center justify-center p-4">
-                    <img src={p.image_url} alt={p.name} className="max-w-full max-h-32 object-contain" />
-                  </div>
-                ) : (
-                  <div className="bg-ink/5 border-r border-ink/10" />
+              <div key={p.id} className="rounded-lg border border-ink/15 overflow-hidden p-5">
+                <h3 className="font-display text-xl text-ink leading-tight">{p.name}</h3>
+                {p.tagline && <p className="text-[11px] uppercase tracking-wider text-accent mt-1">{p.tagline}</p>}
+                {p.highlights.filter(Boolean).length > 0 && (
+                  <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[13px] text-ink/80">
+                    {p.highlights.filter(Boolean).map((h, i) => (
+                      <li key={i} className="flex gap-2 min-w-0">
+                        <span className="mt-1.5 h-1 w-1 rounded-full bg-accent shrink-0" /><span className="break-words">{h}</span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-                <div className="p-5 flex flex-col">
-                  <h3 className="font-display text-xl text-ink leading-tight">{p.name}</h3>
-                  {p.tagline && <p className="text-[11px] uppercase tracking-wider text-accent mt-1">{p.tagline}</p>}
-                  {p.highlights.filter(Boolean).length > 0 && (
-                    <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[13px] text-ink/80">
-                      {p.highlights.filter(Boolean).map((h, i) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="mt-1.5 h-1 w-1 rounded-full bg-accent shrink-0" /><span>{h}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {p.link && <p className="mt-3 text-[11px] text-ink/50 truncate">{p.link}</p>}
-                </div>
+                {p.link && <p className="mt-3 text-[11px] text-ink/50 break-all">{p.link}</p>}
               </div>
             ))}
+
           </div>
         </BodyPage>
       )}
