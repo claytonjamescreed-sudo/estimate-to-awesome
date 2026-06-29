@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, FileText, Users, ShieldCheck, LogOut, Plus, Inbox, Package, Cloud } from "lucide-react";
+import { LayoutDashboard, FileText, Users, ShieldCheck, LogOut, Plus, Inbox, Package, Cloud, Plug } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -21,6 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     ...(isAdmin ? [
       { to: "/admin", label: "Admin", icon: ShieldCheck },
       { to: "/admin/products", label: "Products", icon: Package },
+      { to: "/admin/integrations", label: "Integrations", icon: Plug },
       { to: "/admin/requests", label: "Requests", icon: Inbox },
     ] : []),
   ];

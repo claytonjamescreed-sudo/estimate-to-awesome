@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Cloud, CheckCircle2, Plug, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { Cloud, CheckCircle2, Plug, Trash2, Loader2, ExternalLink, Building2, CircleDashed } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { getWorkspaceIntegrationStatus } from "@/lib/integrations.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -60,9 +62,15 @@ interface UserIntegrationRow {
 }
 
 function ConnectionsPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [connecting, setConnecting] = useState<Provider | null>(null);
+
+  const fetchWorkspace = useServerFn(getWorkspaceIntegrationStatus);
+  const { data: workspace } = useQuery({
+    queryKey: ["workspace_integration_status"],
+    queryFn: () => fetchWorkspace(),
+  });
 
   const { data: integrations = [], isLoading } = useQuery({
     queryKey: ["user_integrations", user?.id],
@@ -99,6 +107,28 @@ function ConnectionsPage() {
           Link your own cloud-storage accounts so you can embed case studies, testimonials, product images, and videos directly into proposals. Each connection is private to your account.
         </p>
       </header>
+
+      <section className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-accent" />
+            <h2 className="font-display text-lg">Workspace integrations</h2>
+          </div>
+          {isAdmin && (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/integrations">Manage <ExternalLink className="h-3 w-3" /></Link>
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Shared connections wired up once by your admin — available to every rep automatically.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <WorkspaceBadge name="Zoho Books" connected={workspace?.zoho_books ?? false} />
+          <WorkspaceBadge name="Zoho CRM" connected={workspace?.zoho_crm ?? false} />
+        </div>
+      </section>
+
 
       <div className="grid gap-5">
         {PROVIDERS.map((p) => {
@@ -166,6 +196,21 @@ function ConnectionsPage() {
         onSaved={() => qc.invalidateQueries({ queryKey: ["user_integrations"] })}
       />
     </div>
+  );
+}
+
+function WorkspaceBadge({ name, connected }: { name: string; connected: boolean }) {
+  if (connected) {
+    return (
+      <Badge className="gap-1 bg-emerald-100 text-emerald-900 hover:bg-emerald-100 border-emerald-200">
+        <CheckCircle2 className="h-3 w-3" /> {name}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1 text-muted-foreground">
+      <CircleDashed className="h-3 w-3" /> {name} · not connected
+    </Badge>
   );
 }
 
