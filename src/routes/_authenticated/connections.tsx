@@ -199,6 +199,21 @@ function ConnectionsPage() {
   );
 }
 
+function WorkspaceBadge({ name, connected }: { name: string; connected: boolean }) {
+  if (connected) {
+    return (
+      <Badge className="gap-1 bg-emerald-100 text-emerald-900 hover:bg-emerald-100 border-emerald-200">
+        <CheckCircle2 className="h-3 w-3" /> {name}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1 text-muted-foreground">
+      <CircleDashed className="h-3 w-3" /> {name} · not connected
+    </Badge>
+  );
+}
+
 
 function ConnectDialog({
   provider,
