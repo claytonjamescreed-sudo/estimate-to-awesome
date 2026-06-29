@@ -44,8 +44,21 @@ function EditorPage() {
 
   useEffect(() => {
     if (proposal && !draft) {
-      setDraft(proposal);
-      lastSaved.current = JSON.stringify(proposal);
+      const hydrated: ProposalRow = {
+        ...proposal,
+        content: {
+          ...proposal.content,
+          client_spotlight: proposal.content.client_spotlight ?? {
+            enabled: false, logo_url: "", industry: "", hq: "", size: "",
+            about: "", challenge: "", why_us: "",
+          },
+          featured_products: proposal.content.featured_products ?? {
+            enabled: false, intro: "Hand-picked solutions central to this design.", products: [],
+          },
+        },
+      };
+      setDraft(hydrated);
+      lastSaved.current = JSON.stringify(hydrated);
     }
   }, [proposal, draft]);
 
