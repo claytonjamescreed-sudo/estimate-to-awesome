@@ -269,7 +269,8 @@ function NewProposalPage() {
 
 /**
  * Best-effort parser for CONTI Electronics estimates. Identifies section
- * headers and detects table rows that start with a quantity integer.
+ * headers and detects table rows that start with a quantity integer. Also
+ * pulls header metadata (project name, reference code, client/bill-to).
  */
 function parseConti(text: string): ParsedEstimate {
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -280,36 +281,73 @@ function parseConti(text: string): ParsedEstimate {
   let client_name: string | undefined;
 
   const headerCandidates = /^(Boardroom|Audio|Video|Display|Control|Network|Conference|Meeting Room|Huddle|Training Room|Reception|Lobby|Cabling|Labor|Labour|Programming|Services|Equipment|Mounts?|Cameras?|Microphones?|Speakers?|DSP)/i;
-  const refLine = /\b(AAAQ\d+|Q\d{4,}|EST-\d+)\b/;
+  const refLine = /\b(AAAQ\d+|Q\d{4,}|EST-\d+|ESTIMATE\s*#?\s*\d+)\b/i;
   const moneyTok = /\$?\s?(-?[\d,]+\.\d{2})/g;
+  const stopWords = /^(estimate|quote|proposal|date|expires|valid|page|subtotal|total|tax|gst|hst|pst|qty|quantity|description|unit|price|amount|make|model|item|conti|electronics|phone|email|tel|fax|www\.|http)/i;
 
-  for (const ln of lines) {
+  // --- Pass 1: header metadata ---
+  for (let i = 0; i < lines.length; i++) {
+    const ln = lines[i];
+
     if (!reference) {
-      const m = ln.match(refLine); if (m) reference = m[1];
-    }
-    if (!project_name && /project\s*:|project name/i.test(ln)) {
-      project_name = ln.split(/:\s*/).slice(1).join(":").trim() || undefined;
-    }
-    if (!client_name && /client\s*:|customer\s*:|bill\s*to/i.test(ln)) {
-      client_name = ln.split(/:\s*/).slice(1).join(":").trim() || undefined;
+      const m = ln.match(refLine);
+      if (m) reference = m[1].replace(/^estimate\s*#?\s*/i, "").trim();
     }
 
-    // Section header: short line that doesn't look like a row
+    // Inline "Project: Foo" / "Project Name: Foo" / "RE: Foo" / "Job: Foo"
+    if (!project_name && /^(project(\s*name)?|job(\s*name)?|re)\s*[:\-]/i.test(ln)) {
+      const after = ln.split(/[:\-]/).slice(1).join(":").trim();
+      if (after) project_name = after;
+      else if (lines[i + 1] && !stopWords.test(lines[i + 1])) project_name = lines[i + 1];
+    }
+
+    // Inline "Client: Foo" / "Customer: Foo" / "Attention: Foo"
+    if (!client_name && /^(client|customer|prepared\s*for|attention|attn)\s*[:\-]/i.test(ln)) {
+      const after = ln.split(/[:\-]/).slice(1).join(":").trim();
+      if (after) client_name = after;
+      else if (lines[i + 1] && !stopWords.test(lines[i + 1])) client_name = lines[i + 1];
+    }
+
+    // "Bill To" / "Ship To" block — name is usually the first non-empty line below.
+    if (!client_name && /^(bill\s*to|ship\s*to|sold\s*to)\s*[:\-]?\s*$/i.test(ln)) {
+      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+        const c = lines[j];
+        if (c && !stopWords.test(c) && !/^\d/.test(c) && c.length < 80) {
+          client_name = c;
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback project name: first short, title-cased, non-vendor line near top.
+  if (!project_name) {
+    for (const ln of lines.slice(0, 25)) {
+      if (
+        ln.length > 6 && ln.length < 70 &&
+        !stopWords.test(ln) &&
+        !/conti/i.test(ln) &&
+        !/^\d/.test(ln) &&
+        !/\$/.test(ln) &&
+        /[A-Z]/.test(ln)
+      ) { project_name = ln; break; }
+    }
+  }
+
+  // --- Pass 2: sections + line items ---
+  for (const ln of lines) {
     if (headerCandidates.test(ln) && !/^\d/.test(ln) && ln.length < 60 && !/\$/.test(ln)) {
       current = { id: crypto.randomUUID(), name: ln.replace(/\s+\d+$/, "").trim(), items: [] };
       sections.push(current);
       continue;
     }
 
-    // Row: starts with integer qty
     const rowMatch = ln.match(/^(\d{1,3})\s+(.+)$/);
     if (rowMatch) {
       const qty = parseInt(rowMatch[1], 10);
       const rest = rowMatch[2];
       const monies = Array.from(rest.matchAll(moneyTok)).map((m) => parseFloat(m[1].replace(/,/g, "")));
-      // Heuristic: last money is ext, second-last is unit
       const unit = monies.length >= 2 ? monies[monies.length - 2] : monies[0] ?? 0;
-      // Strip money tokens from text for make/model/desc
       const stripped = rest.replace(moneyTok, "").trim();
       const tokens = stripped.split(/\s{2,}|\t+/).filter(Boolean);
       const [make = "", model = "", ...descParts] = tokens;
@@ -332,9 +370,9 @@ function parseConti(text: string): ParsedEstimate {
   }
 
   return {
-    project_name,
-    reference,
-    client_name,
+    project_name: project_name?.replace(/\s{2,}/g, " ").trim(),
+    reference: reference?.trim(),
+    client_name: client_name?.replace(/\s{2,}/g, " ").trim(),
     sections: sections.filter((s) => s.items.length > 0),
   };
 }
