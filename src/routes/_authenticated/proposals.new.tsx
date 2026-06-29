@@ -239,9 +239,21 @@ function NewProposalPage() {
         </label>
 
         {parsing && (
-          <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" /> Parsing PDF…
-          </p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 backdrop-blur-sm animate-fade-in">
+            <div className="relative bg-card border border-border rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-5 max-w-sm animate-scale-in">
+              <div className="relative h-20 w-20">
+                <div className="absolute inset-0 rounded-full border-4 border-accent/15" />
+                <div className="absolute inset-0 rounded-full border-4 border-accent border-t-transparent animate-spin" />
+                <FileText className="absolute inset-0 m-auto h-8 w-8 text-accent" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-display text-xl text-foreground">Parsing your PDF</h3>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Extracting sections, line items, and project details…
+                </p>
+              </div>
+            </div>
+          </div>
         )}
         {parsed && (
           <div className="rounded-md border border-border bg-muted/50 p-4 text-sm">
