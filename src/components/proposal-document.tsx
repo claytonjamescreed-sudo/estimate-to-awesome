@@ -1,6 +1,6 @@
 import type { ProposalContent } from "@/lib/proposal-types";
 import { money, shortDate } from "@/lib/format";
-import gosaviLogo from "@/assets/gosavi-logo.png";
+import { tenant } from "@/config/tenant";
 
 interface Props {
   content: ProposalContent;
@@ -175,7 +175,7 @@ function Cover({ content }: { content: ProposalContent }) {
         <footer className="grid grid-cols-3 gap-6 pt-8 border-t border-paper/15 text-xs">
           <Meta label="Client" value={c.client_name || "—"} />
           <Meta label="Reference" value={c.reference || "—"} />
-          <Meta label="Prepared by" value={c.prepared_by || "GOSAVI Meeting Solutions"} />
+          <Meta label="Prepared by" value={c.prepared_by || tenant.legalName} />
         </footer>
       </div>
     </article>
@@ -198,7 +198,7 @@ function BodyPage({ title, subtitle, children }: { title: string; subtitle?: str
           {children}
         </div>
         <footer className="mt-10 pt-4 border-t border-ink/15 flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-ink/50">
-          <span>GOSAVI Meeting Solutions · gosavi.ca</span>
+          <span>{tenant.legalName} · {tenant.website}</span>
           <span>Confidential</span>
         </footer>
       </div>
@@ -219,8 +219,8 @@ function BrandMark({ light = false }: { light?: boolean }) {
   return (
     <div className="inline-flex items-center gap-2.5">
       <img
-        src={gosaviLogo}
-        alt="GOSAVI Meeting Solutions"
+        src={tenant.logo}
+        alt={tenant.legalName}
         className={`h-8 w-auto ${light ? "brightness-0 invert" : ""}`}
       />
     </div>
@@ -265,7 +265,7 @@ function ClientSpotlightBlock({ content }: { content: ProposalContent }) {
       )}
       {c.why_us && (
         <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-accent mb-1.5">Why GOSAVI</p>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-accent mb-1.5">{tenant.proposal.whyUsHeading}</p>
           <p className="text-[14px] text-ink/85 leading-relaxed whitespace-pre-wrap">{c.why_us}</p>
         </div>
       )}

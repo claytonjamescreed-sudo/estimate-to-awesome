@@ -20,6 +20,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
+import { tenant } from "@/config/tenant";
 
 function NotFoundComponent() {
   return (
@@ -58,8 +59,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GOSAVI Proposal Builder" },
-      { name: "description", content: "Beautiful AV proposals for GOSAVI Meeting Solutions — drafted in minutes." },
+      { title: tenant.appTitle },
+      { name: "description", content: tenant.appDescription },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
