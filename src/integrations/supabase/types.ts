@@ -142,6 +142,45 @@ export type Database = {
           },
         ]
       }
+      product_library: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          highlights: Json
+          id: string
+          image_url: string
+          link: string
+          name: string
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          highlights?: Json
+          id?: string
+          image_url?: string
+          link?: string
+          name: string
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          highlights?: Json
+          id?: string
+          image_url?: string
+          link?: string
+          name?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
