@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money, shortDate } from "@/lib/format";
 import { StatusPill } from "./dashboard";
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/_authenticated/admin/")({
   beforeLoad: async () => {
     const { data: userRes } = await supabase.auth.getUser();
     if (!userRes.user) throw redirect({ to: "/auth" });
