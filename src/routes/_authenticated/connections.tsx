@@ -178,6 +178,16 @@ function ConnectDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+
+function ConnectDialog({
+  provider,
+  onClose,
+  onSaved,
+}: {
+  provider: Provider | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const [label, setLabel] = useState("");
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
