@@ -76,10 +76,23 @@ function NewProposalPage() {
       setPdfText(text);
       const result = parseConti(text);
       setParsed(result);
-      if (result.project_name && !title) setTitle(result.project_name);
-      if (result.reference && !projectCode) setProjectCode(result.reference);
-      if (result.client_name && !preparedFor) setPreparedFor(result.client_name);
-      toast.success(`Parsed ${result.sections.reduce((a, s) => a + s.items.length, 0)} line items from ${result.sections.length} sections.`);
+      setPdfText(text);
+      const result = parseConti(text);
+      setParsed(result);
+      // Auto-fill the form from the parsed estimate. Overwrite empty fields;
+      // never clobber values the user has already typed.
+      if (result.project_name) setTitle((t) => t.trim() ? t : result.project_name!);
+      if (result.reference) setProjectCode((c) => c.trim() ? c : result.reference!);
+      if (result.client_name) setPreparedFor((p) => p.trim() ? p : result.client_name!);
+      const autofilled = [
+        result.project_name && "title",
+        result.client_name && "prepared-for",
+        result.reference && "reference",
+      ].filter(Boolean).join(", ");
+      toast.success(
+        `Parsed ${result.sections.reduce((a, s) => a + s.items.length, 0)} line items` +
+        (autofilled ? ` · auto-filled ${autofilled}` : ""),
+      );
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : "Could not parse the PDF");
