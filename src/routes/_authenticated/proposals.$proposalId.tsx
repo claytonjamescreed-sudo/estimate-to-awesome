@@ -48,6 +48,25 @@ function EditorPage() {
   const [draft, setDraft] = useState<ProposalRow | null>(null);
   const [dirty, setDirty] = useState(false);
   const lastSaved = useRef<string>("");
+  const docPreviewRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!docPreviewRef.current || !draft) return;
+    setDownloading(true);
+    try {
+      await (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
+      const blob = await generateProposalPdf(docPreviewRef.current);
+      const name = (draft.title || "proposal").replace(/[^a-z0-9-_]+/gi, "_").replace(/^_+|_+$/g, "") + ".pdf";
+      downloadBlob(blob, name);
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't build PDF. Try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
 
   useEffect(() => {
     if (proposal && !draft) {
