@@ -44,19 +44,21 @@ export function ProposalDocument({ content, currency, totals }: Props) {
           {content.featured_products.intro && (
             <p className="text-[14px] text-ink/75 mb-6 max-w-2xl">{content.featured_products.intro}</p>
           )}
-          <div className="grid grid-cols-2 gap-5">
+          <div className="space-y-5">
             {content.featured_products.products.map((p) => (
-              <div key={p.id} className="rounded-lg border border-ink/15 overflow-hidden flex flex-col">
-                {p.image_url && (
-                  <div className="aspect-[4/3] bg-ink/5 overflow-hidden">
-                    <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+              <div key={p.id} className="rounded-lg border border-ink/15 overflow-hidden grid grid-cols-[200px_1fr]">
+                {p.image_url ? (
+                  <div className="bg-white border-r border-ink/10 flex items-center justify-center p-4">
+                    <img src={p.image_url} alt={p.name} className="max-w-full max-h-32 object-contain" />
                   </div>
+                ) : (
+                  <div className="bg-ink/5 border-r border-ink/10" />
                 )}
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-display text-lg text-ink leading-tight">{p.name}</h3>
-                  {p.tagline && <p className="text-[12px] uppercase tracking-wider text-accent mt-1">{p.tagline}</p>}
+                <div className="p-5 flex flex-col">
+                  <h3 className="font-display text-xl text-ink leading-tight">{p.name}</h3>
+                  {p.tagline && <p className="text-[11px] uppercase tracking-wider text-accent mt-1">{p.tagline}</p>}
                   {p.highlights.filter(Boolean).length > 0 && (
-                    <ul className="mt-3 space-y-1.5 text-[13px] text-ink/80">
+                    <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[13px] text-ink/80">
                       {p.highlights.filter(Boolean).map((h, i) => (
                         <li key={i} className="flex gap-2">
                           <span className="mt-1.5 h-1 w-1 rounded-full bg-accent shrink-0" /><span>{h}</span>
