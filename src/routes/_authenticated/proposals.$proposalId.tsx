@@ -176,8 +176,18 @@ function EditorPage() {
               <RevisionList proposalId={proposalId} />
             </SheetContent>
           </Sheet>
-          <Button variant="outline" size="sm" asChild><Link to="/proposals/$proposalId/preview" params={{ proposalId }} target="_blank"><Eye className="h-4 w-4" /> Preview</Link></Button>
-          <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4" /></Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const url = `/proposals/${proposalId}/preview`;
+              const win = window.open(url, "_blank", "noopener,noreferrer");
+              // Sandboxed previews can block popups — fall back to same-tab nav
+              if (!win) navigate({ to: "/proposals/$proposalId/preview", params: { proposalId } });
+            }}
+          >
+            <Eye className="h-4 w-4" /> Preview
+          </Button>
           <Button size="sm" onClick={() => save.mutate()} disabled={!dirty || save.isPending}>
             <Save className="h-4 w-4" /> Save
           </Button>
