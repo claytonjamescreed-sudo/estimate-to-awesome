@@ -224,34 +224,27 @@ function ConnectDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [label, setLabel] = useState("");
-  const [email, setEmail] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const startFlow = useServerFn(startOAuthFlow);
 
   if (!provider) return null;
   const activeProvider: Provider = provider;
   const info = PROVIDERS.find((p) => p.id === activeProvider)!;
 
-  async function save() {
-    setSaving(true);
+  async function authorize() {
+    setLaunching(true);
     try {
-      const { error } = await supabase.from("user_integrations").insert({
-        user_id: (await supabase.auth.getUser()).data.user!.id,
-        provider: activeProvider,
-        account_label: label || null,
-        account_email: email || null,
-        status: "pending_oauth",
-      });
-      if (error) throw error;
-      toast.success(`${info.name} placeholder saved — OAuth will activate it once configured.`);
-      onSaved();
-      onClose();
-      setLabel("");
-      setEmail("");
+      const res = await startFlow({ data: { provider: activeProvider } });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      window.location.href = res.authorizeUrl;
     } catch (e: any) {
-      toast.error(e.message ?? "Could not save");
+      toast.error(e.message ?? "Could not start OAuth flow");
     } finally {
-      setSaving(false);
+      setLaunching(false);
+      onSaved();
     }
   }
 
@@ -261,33 +254,19 @@ function ConnectDialog({
         <DialogHeader>
           <DialogTitle>Connect {info.name}</DialogTitle>
           <DialogDescription>
-            The live OAuth flow for {info.name} will launch here once the workspace admin adds the provider's OAuth credentials. For now, you can register the account so it appears in your proposals.
+            You'll be redirected to {info.name} to authorize read-only access to your files. Tokens are stored privately on your account and never shared with other users.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground flex gap-2">
-          <ExternalLink className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          <span>
-            When live, this will open {info.name}'s consent screen and request read-only access to files you pick — no tokens are stored unencrypted.
-          </span>
-        </div>
-
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="acc-label">Display name</Label>
-            <Input id="acc-label" placeholder="e.g. Marketing Drive" value={label} onChange={(e) => setLabel(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="acc-email">Account email</Label>
-            <Input id="acc-email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
+        <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+          <span className="font-medium">Scope requested:</span> {info.scopes}
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
-          <Button onClick={save} disabled={saving || (!label && !email)}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
-            Save connection
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={authorize} disabled={launching}>
+            {launching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
+            Authorize with {info.name}
           </Button>
         </DialogFooter>
       </DialogContent>
