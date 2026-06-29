@@ -22,6 +22,11 @@ export function ProposalDocument({ content, currency, totals }: Props) {
           <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-ink/85">{content.exec_summary.body}</p>
         </BodyPage>
       )}
+      {content.client_spotlight?.enabled && (
+        <BodyPage title="Client Spotlight" subtitle={content.cover.client_name}>
+          <ClientSpotlightBlock content={content} />
+        </BodyPage>
+      )}
       {content.scope.enabled && (
         <BodyPage title="Scope of Work" subtitle={content.cover.client_name}>
           <ul className="space-y-3">
@@ -32,6 +37,38 @@ export function ProposalDocument({ content, currency, totals }: Props) {
               </li>
             ))}
           </ul>
+        </BodyPage>
+      )}
+      {content.featured_products?.enabled && content.featured_products.products.length > 0 && (
+        <BodyPage title="Featured Products" subtitle={content.cover.client_name}>
+          {content.featured_products.intro && (
+            <p className="text-[14px] text-ink/75 mb-6 max-w-2xl">{content.featured_products.intro}</p>
+          )}
+          <div className="grid grid-cols-2 gap-5">
+            {content.featured_products.products.map((p) => (
+              <div key={p.id} className="rounded-lg border border-ink/15 overflow-hidden flex flex-col">
+                {p.image_url && (
+                  <div className="aspect-[4/3] bg-ink/5 overflow-hidden">
+                    <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="p-4 flex-1 flex flex-col">
+                  <h3 className="font-display text-lg text-ink leading-tight">{p.name}</h3>
+                  {p.tagline && <p className="text-[12px] uppercase tracking-wider text-accent mt-1">{p.tagline}</p>}
+                  {p.highlights.filter(Boolean).length > 0 && (
+                    <ul className="mt-3 space-y-1.5 text-[13px] text-ink/80">
+                      {p.highlights.filter(Boolean).map((h, i) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="mt-1.5 h-1 w-1 rounded-full bg-accent shrink-0" /><span>{h}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {p.link && <p className="mt-3 text-[11px] text-ink/50 truncate">{p.link}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
         </BodyPage>
       )}
       {content.line_items.enabled && (
@@ -184,6 +221,52 @@ function BrandMark({ light = false }: { light?: boolean }) {
         alt="GOSAVI Meeting Solutions"
         className={`h-8 w-auto ${light ? "brightness-0 invert" : ""}`}
       />
+    </div>
+  );
+}
+
+function ClientSpotlightBlock({ content }: { content: ProposalContent }) {
+  const c = content.client_spotlight;
+  const facts = [
+    { label: "Industry", value: c.industry },
+    { label: "Headquarters", value: c.hq },
+    { label: "Size", value: c.size },
+  ].filter((f) => f.value);
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start gap-6">
+        {c.logo_url && (
+          <div className="h-20 w-20 rounded-md bg-ink/5 border border-ink/10 overflow-hidden flex items-center justify-center shrink-0">
+            <img src={c.logo_url} alt="" className="max-h-full max-w-full object-contain p-2" />
+          </div>
+        )}
+        <div className="flex-1">
+          <h3 className="font-display text-2xl text-ink">{content.cover.client_name || "Client"}</h3>
+          {c.about && <p className="mt-2 text-[14px] text-ink/80 leading-relaxed">{c.about}</p>}
+        </div>
+      </div>
+      {facts.length > 0 && (
+        <div className="grid grid-cols-3 gap-4 border-y border-ink/10 py-4">
+          {facts.map((f) => (
+            <div key={f.label}>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-ink/50">{f.label}</p>
+              <p className="text-[14px] text-ink mt-1">{f.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {c.challenge && (
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-accent mb-1.5">The Challenge</p>
+          <p className="text-[14px] text-ink/85 leading-relaxed whitespace-pre-wrap">{c.challenge}</p>
+        </div>
+      )}
+      {c.why_us && (
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-accent mb-1.5">Why GOSAVI</p>
+          <p className="text-[14px] text-ink/85 leading-relaxed whitespace-pre-wrap">{c.why_us}</p>
+        </div>
+      )}
     </div>
   );
 }
