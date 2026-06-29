@@ -72,7 +72,7 @@ export const Route = createFileRoute("/api/public/oauth/microsoft/callback")({
 
         const { error: upErr } = await supabaseAdmin.from("user_integrations").insert({
           user_id: stateRow.user_id,
-          provider: stateRow.provider, // onedrive or sharepoint
+          provider: stateRow.provider as "onedrive" | "sharepoint",
           account_label: name,
           account_email: email,
           access_token: tokenJson.access_token,
