@@ -247,30 +247,32 @@ function RequestsPage() {
                           }
                         }}
                       />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(buildPrompt(r));
-                            toast.success("Prompt copied — paste into Lovable chat");
-                          } catch {
-                            toast.error("Couldn't copy — check browser permissions");
-                          }
-                        }}
-                      >
-                        <Copy className="h-4 w-4 mr-1.5" /> Copy prompt
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          if (confirm("Delete this request?")) deleteMut.mutate(r.id);
-                        }}
-                        aria-label="Delete"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(buildPrompt(r));
+                              toast.success("Prompt copied — paste into Lovable chat");
+                            } catch {
+                              toast.error("Couldn't copy — check browser permissions");
+                            }
+                          }}
+                        >
+                          <Copy className="h-4 w-4 mr-1.5" /> Copy prompt
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm("Delete this request?")) deleteMut.mutate(r.id);
+                          }}
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="mt-3 grid sm:grid-cols-[1fr_auto] gap-3 items-center">
