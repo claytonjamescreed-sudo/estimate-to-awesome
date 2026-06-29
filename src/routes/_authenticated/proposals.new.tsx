@@ -209,7 +209,7 @@ function NewProposalPage() {
             <div className="flex-1">
               <h3 className="font-medium">Import a CONTI estimate PDF</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                We'll extract sections and line items (Qty, Make, Model, Description, Unit Price) and pre-load them into your proposal.
+                Drag &amp; drop a PDF anywhere in this box, or choose a file. We'll extract sections and line items (Qty, Make, Model, Description, Unit Price) and pre-load them into your proposal.
               </p>
               <div className="mt-4">
                 <Input
