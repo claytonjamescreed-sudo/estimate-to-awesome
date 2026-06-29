@@ -50,34 +50,49 @@ function NewProposalPage() {
   async function handlePdf(file: File) {
     setParsing(true);
     try {
-      // Lazy-load pdf.js (legacy build) so the bundle stays slim until first use.
       const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
       const worker = (await import("pdfjs-dist/legacy/build/pdf.worker.mjs?url")).default;
       pdfjs.GlobalWorkerOptions.workerSrc = worker;
 
       const buf = await file.arrayBuffer();
       const doc = await pdfjs.getDocument({ data: buf }).promise;
+
+      // Reconstruct rows using X/Y coordinates. Items within a horizontal gap of
+      // > GAP_X get separated by a tab so downstream code can split into columns.
+      const Y_TOL = 3;
+      const GAP_X = 8;
       let text = "";
       for (let p = 1; p <= doc.numPages; p++) {
         const page = await doc.getPage(p);
         const content = await page.getTextContent();
-        const items = content.items as Array<{ str: string; transform: number[] }>;
-        // Group by y to reconstruct lines.
-        const lines = new Map<number, string[]>();
+        type Item = { str: string; transform: number[]; width?: number };
+        const items = (content.items as Item[]).filter((i) => i.str && i.str.trim());
+
+        const rowMap = new Map<number, Item[]>();
         for (const it of items) {
-          const y = Math.round(it.transform[5]);
-          const arr = lines.get(y) ?? [];
-          arr.push(it.str);
-          lines.set(y, arr);
+          const key = Math.round(it.transform[5] / Y_TOL) * Y_TOL;
+          (rowMap.get(key) ?? rowMap.set(key, []).get(key)!).push(it);
         }
-        const sortedYs = Array.from(lines.keys()).sort((a, b) => b - a);
-        text += sortedYs.map((y) => lines.get(y)!.join(" ").trim()).join("\n") + "\n\n";
+        const sortedYs = Array.from(rowMap.keys()).sort((a, b) => b - a);
+        for (const y of sortedYs) {
+          const row = rowMap.get(y)!.sort((a, b) => a.transform[4] - b.transform[4]);
+          let line = "";
+          let prevEndX = -Infinity;
+          for (const it of row) {
+            const x = it.transform[4];
+            const w = it.width ?? it.str.length * 4;
+            if (line === "") line = it.str;
+            else if (x - prevEndX > GAP_X) line += "\t" + it.str;
+            else line += (it.str.startsWith(" ") || line.endsWith(" ") ? "" : " ") + it.str;
+            prevEndX = x + w;
+          }
+          text += line.trim() + "\n";
+        }
+        text += "\n";
       }
       setPdfText(text);
       const result = parseConti(text);
       setParsed(result);
-      // Auto-fill the form from the parsed estimate. Overwrite empty fields;
-      // never clobber values the user has already typed.
       if (result.project_name) setTitle((t) => t.trim() ? t : result.project_name!);
       if (result.reference) setProjectCode((c) => c.trim() ? c : result.reference!);
       if (result.client_name) setPreparedFor((p) => p.trim() ? p : result.client_name!);
