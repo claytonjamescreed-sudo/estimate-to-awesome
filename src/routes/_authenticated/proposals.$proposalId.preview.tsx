@@ -18,6 +18,44 @@ function safeFilename(s: string) {
   return (s || "proposal").replace(/[^a-z0-9-_]+/gi, "_").replace(/^_+|_+$/g, "") + ".pdf";
 }
 
+type PdfPagePreview = {
+  pageNumber: number;
+  imageUrl: string;
+  width: number;
+  height: number;
+};
+
+async function renderPdfPages(blob: Blob): Promise<PdfPagePreview[]> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const worker = (await import("pdfjs-dist/legacy/build/pdf.worker.mjs?url")).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = worker;
+
+  const pdf = await pdfjs.getDocument({ data: await blob.arrayBuffer() }).promise;
+  const pages: PdfPagePreview[] = [];
+  const scale = Math.min(2, Math.max(1.35, window.devicePixelRatio * 1.35));
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Could not render PDF preview.");
+
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    await page.render({ canvasContext: context, viewport }).promise;
+    pages.push({
+      pageNumber,
+      imageUrl: canvas.toDataURL("image/jpeg", 0.92),
+      width: viewport.width,
+      height: viewport.height,
+    });
+  }
+
+  await pdf.destroy();
+  return pages;
+}
+
 function PreviewPage() {
   const { proposalId } = useParams({ from: "/_authenticated/proposals/$proposalId/preview" });
   const { data, isLoading } = useQuery({
@@ -30,15 +68,15 @@ function PreviewPage() {
   });
 
   const docRef = useRef<HTMLDivElement>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfPages, setPdfPages] = useState<PdfPagePreview[]>([]);
   const [building, setBuilding] = useState(false);
 
   useEffect(() => { if (data) document.title = `${data.title} — Proposal`; }, [data]);
 
   // Generate PDF as soon as the document is rendered
   useEffect(() => {
-    if (!data || !docRef.current || pdfUrl) return;
+    if (!data || !docRef.current || pdfBlob) return;
     let cancelled = false;
     setBuilding(true);
     // Defer one tick so fonts & images settle
@@ -47,9 +85,10 @@ function PreviewPage() {
         await (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
         const blob = await generateProposalPdf(docRef.current!);
         if (cancelled) return;
-        const url = URL.createObjectURL(blob);
         setPdfBlob(blob);
-        setPdfUrl(url);
+        const pages = await renderPdfPages(blob);
+        if (cancelled) return;
+        setPdfPages(pages);
       } catch (e) {
         console.error(e);
         toast.error("Couldn't build the PDF preview. Try again.");
@@ -58,9 +97,7 @@ function PreviewPage() {
       }
     }, 200);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [data, pdfUrl]);
-
-  useEffect(() => () => { if (pdfUrl) URL.revokeObjectURL(pdfUrl); }, [pdfUrl]);
+  }, [data, pdfBlob]);
 
   const handleDownload = () => {
     if (!pdfBlob || !data) return;
@@ -90,9 +127,20 @@ function PreviewPage() {
       </div>
 
       {/* In-browser PDF viewer */}
-      <div className="flex-1 relative">
-        {pdfUrl ? (
-          <iframe title="Proposal PDF" src={pdfUrl} className="w-full h-[calc(100vh-57px)] border-0 bg-white" />
+      <div className="flex-1 relative bg-neutral-200 overflow-auto h-[calc(100vh-57px)]">
+        {pdfPages.length > 0 ? (
+          <div className="mx-auto w-full max-w-[920px] px-4 py-8 space-y-8">
+            {pdfPages.map((page) => (
+              <img
+                key={page.pageNumber}
+                src={page.imageUrl}
+                alt={`Proposal PDF page ${page.pageNumber}`}
+                className="block w-full bg-white shadow-xl ring-1 ring-black/10"
+                style={{ aspectRatio: `${page.width} / ${page.height}` }}
+                loading={page.pageNumber > 2 ? "lazy" : "eager"}
+              />
+            ))}
+          </div>
         ) : (
           <div className="flex items-center justify-center py-20 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mr-2" />
