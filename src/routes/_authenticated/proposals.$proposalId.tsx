@@ -189,7 +189,11 @@ function EditorPage() {
           >
             <Eye className="h-4 w-4" /> Preview
           </Button>
-          <Button variant="outline" size="sm" onClick={() => window.print()} title="Print"><Printer className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading} title="Download PDF">
+            {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {downloading ? "Building…" : "Download PDF"}
+          </Button>
+
           <Button size="sm" onClick={() => save.mutate()} disabled={!dirty || save.isPending}>
             <Save className="h-4 w-4" /> Save
           </Button>
