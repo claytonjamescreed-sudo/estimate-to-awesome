@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Bug, Sparkles, HelpCircle, Trash2, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bug, Sparkles, HelpCircle, Trash2, ExternalLink, CheckCircle2, GitCommit } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/requests")({
   component: RequestsPage,
