@@ -268,7 +268,14 @@ function EditorPage() {
                     </div>
                   </div>
                 ))}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <FromEstimatePicker
+                    sections={draft.content.line_items.sections}
+                    onAdd={(items) => updateContent((c) => {
+                      for (const p of items) c.featured_products.products.push({ ...p, id: crypto.randomUUID() });
+                      c.featured_products.enabled = true;
+                    })}
+                  />
                   <ProductLibraryPicker
                     onPick={(prod) => updateContent((c) => {
                       c.featured_products.products.push({ ...prod, id: crypto.randomUUID() });
