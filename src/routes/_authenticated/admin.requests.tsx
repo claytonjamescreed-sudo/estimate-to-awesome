@@ -248,6 +248,20 @@ function RequestsPage() {
                         }}
                       />
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(buildPrompt(r));
+                            toast.success("Prompt copied — paste into Lovable chat");
+                          } catch {
+                            toast.error("Couldn't copy — check browser permissions");
+                          }
+                        }}
+                      >
+                        <Copy className="h-4 w-4 mr-1.5" /> Copy prompt
+                      </Button>
+                      <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => {
