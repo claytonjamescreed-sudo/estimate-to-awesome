@@ -438,3 +438,117 @@ function RevisionList({ proposalId }: { proposalId: string }) {
     </div>
   );
 }
+
+type LookupResult = Awaited<ReturnType<typeof lookupClient>>;
+
+function ClientLookup({
+  fallbackUrl, clientName, onResult,
+}: { fallbackUrl: string; clientName: string; onResult: (r: LookupResult) => void }) {
+  const fn = useServerFn(lookupClient);
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function run() {
+    const target = url.trim() || fallbackUrl;
+    if (!target) {
+      toast.error("Enter a client website URL");
+      return;
+    }
+    setLoading(true);
+    try {
+      const r = await fn({ data: { url: target, client_name: clientName } });
+      onResult(r);
+      toast.success("Client profile generated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lookup failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-dashed border-border bg-muted/30 p-2 space-y-2">
+      <Label className="text-xs text-muted-foreground flex items-center gap-1"><Sparkles className="h-3 w-3" /> Auto-fill from website</Label>
+      <div className="flex gap-1.5">
+        <Input className="h-8" placeholder="company.com" value={url} onChange={(e) => setUrl(e.target.value)} />
+        <Button size="sm" onClick={run} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          Lookup
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface LibraryProduct {
+  id: string;
+  name: string;
+  category: string | null;
+  tagline: string;
+  image_url: string;
+  link: string;
+  highlights: string[];
+}
+
+function ProductLibraryPicker({ onPick }: { onPick: (p: Omit<FeaturedProduct, "id">) => void }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["product-library"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("product_library").select("*").order("name");
+      if (error) throw error;
+      return (data ?? []).map((p) => ({
+        ...p,
+        highlights: Array.isArray(p.highlights) ? (p.highlights as string[]) : [],
+      })) as LibraryProduct[];
+    },
+    enabled: open,
+  });
+
+  const filtered = products.filter((p) =>
+    !q || [p.name, p.category, p.tagline].join(" ").toLowerCase().includes(q.toLowerCase()),
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm"><Library className="h-4 w-4" /> From library</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>Product library</DialogTitle></DialogHeader>
+        <Input placeholder="Search products…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
+          {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {!isLoading && filtered.length === 0 && <p className="text-sm text-muted-foreground">No products. Admins can add some under Admin → Products.</p>}
+          {filtered.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => {
+                onPick({
+                  name: p.name,
+                  tagline: p.tagline,
+                  image_url: p.image_url,
+                  link: p.link,
+                  highlights: p.highlights,
+                });
+                setOpen(false);
+              }}
+              className="w-full text-left rounded-md border border-border p-3 hover:border-primary/60 hover:bg-accent/30 flex gap-3"
+            >
+              {p.image_url ? (
+                <img src={p.image_url} alt="" className="h-14 w-14 object-contain rounded bg-muted" />
+              ) : <div className="h-14 w-14 rounded bg-muted" />}
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm">{p.name} {p.category && <span className="text-xs text-muted-foreground">· {p.category}</span>}</p>
+                <p className="text-xs text-muted-foreground truncate">{p.tagline}</p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{p.highlights.slice(0, 2).join(" • ")}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
