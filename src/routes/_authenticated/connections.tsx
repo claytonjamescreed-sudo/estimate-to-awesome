@@ -169,15 +169,6 @@ function ConnectionsPage() {
   );
 }
 
-function ConnectDialog({
-  provider,
-  onClose,
-  onSaved,
-}: {
-  provider: Provider | null;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
 
 function ConnectDialog({
   provider,
