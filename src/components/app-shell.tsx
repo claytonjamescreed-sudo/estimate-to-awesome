@@ -13,6 +13,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const loc = useLocation();
 
+  if (/^\/proposals\/[^/]+\/preview$/.test(loc.pathname)) {
+    return <>{children}</>;
+  }
+
   const nav: Array<{ to: string; label: string; icon: typeof LayoutDashboard }> = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/proposals", label: "Proposals", icon: FileText },

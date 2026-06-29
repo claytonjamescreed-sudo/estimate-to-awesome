@@ -23,6 +23,7 @@ import { Route as AuthenticatedProposalsNewRouteImport } from './routes/_authent
 import { Route as AuthenticatedProposalsProposalIdRouteImport } from './routes/_authenticated/proposals.$proposalId'
 import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
+import { Route as AuthenticatedProposalsProposalIdIndexRouteImport } from './routes/_authenticated/proposals.$proposalId.index'
 import { Route as AuthenticatedProposalsProposalIdPreviewRouteImport } from './routes/_authenticated/proposals.$proposalId.preview'
 
 const AuthRoute = AuthRouteImport.update({
@@ -101,6 +102,12 @@ const AuthenticatedAdminProductsRoute =
     path: '/products',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedProposalsProposalIdIndexRoute =
+  AuthenticatedProposalsProposalIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProposalsProposalIdRoute,
+  } as any)
 const AuthenticatedProposalsProposalIdPreviewRoute =
   AuthenticatedProposalsProposalIdPreviewRouteImport.update({
     id: '/preview',
@@ -123,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/proposals/': typeof AuthenticatedProposalsIndexRoute
   '/proposals/$proposalId/preview': typeof AuthenticatedProposalsProposalIdPreviewRoute
+  '/proposals/$proposalId/': typeof AuthenticatedProposalsProposalIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,11 +141,11 @@ export interface FileRoutesByTo {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/requests': typeof AuthenticatedAdminRequestsRoute
-  '/proposals/$proposalId': typeof AuthenticatedProposalsProposalIdRouteWithChildren
   '/proposals/new': typeof AuthenticatedProposalsNewRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/proposals': typeof AuthenticatedProposalsIndexRoute
   '/proposals/$proposalId/preview': typeof AuthenticatedProposalsProposalIdPreviewRoute
+  '/proposals/$proposalId': typeof AuthenticatedProposalsProposalIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/proposals/': typeof AuthenticatedProposalsIndexRoute
   '/_authenticated/proposals/$proposalId/preview': typeof AuthenticatedProposalsProposalIdPreviewRoute
+  '/_authenticated/proposals/$proposalId/': typeof AuthenticatedProposalsProposalIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/proposals/'
     | '/proposals/$proposalId/preview'
+    | '/proposals/$proposalId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -184,11 +194,11 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/admin/products'
     | '/admin/requests'
-    | '/proposals/$proposalId'
     | '/proposals/new'
     | '/admin'
     | '/proposals'
     | '/proposals/$proposalId/preview'
+    | '/proposals/$proposalId'
   id:
     | '__root__'
     | '/'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/proposals/'
     | '/_authenticated/proposals/$proposalId/preview'
+    | '/_authenticated/proposals/$proposalId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -314,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/proposals/$proposalId/': {
+      id: '/_authenticated/proposals/$proposalId/'
+      path: '/'
+      fullPath: '/proposals/$proposalId/'
+      preLoaderRoute: typeof AuthenticatedProposalsProposalIdIndexRouteImport
+      parentRoute: typeof AuthenticatedProposalsProposalIdRoute
+    }
     '/_authenticated/proposals/$proposalId/preview': {
       id: '/_authenticated/proposals/$proposalId/preview'
       path: '/preview'
@@ -341,12 +359,15 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedProposalsProposalIdRouteChildren {
   AuthenticatedProposalsProposalIdPreviewRoute: typeof AuthenticatedProposalsProposalIdPreviewRoute
+  AuthenticatedProposalsProposalIdIndexRoute: typeof AuthenticatedProposalsProposalIdIndexRoute
 }
 
 const AuthenticatedProposalsProposalIdRouteChildren: AuthenticatedProposalsProposalIdRouteChildren =
   {
     AuthenticatedProposalsProposalIdPreviewRoute:
       AuthenticatedProposalsProposalIdPreviewRoute,
+    AuthenticatedProposalsProposalIdIndexRoute:
+      AuthenticatedProposalsProposalIdIndexRoute,
   }
 
 const AuthenticatedProposalsProposalIdRouteWithChildren =
