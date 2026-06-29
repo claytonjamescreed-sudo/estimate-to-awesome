@@ -54,8 +54,35 @@ Most tenants want one or more of these. Each is an opt-in plugin.
 
 - [ ] **Zoho Books/Invoice** — connect via Lovable connector (Settings → Connectors)
 - [ ] **QuoteWerks / Q360 / on-prem estimating tools** — custom server function per client (~3–5 hrs)
-- [ ] **Cloud library** (Box / Google Drive / OneDrive / SharePoint) for case studies — Google Drive/OneDrive are native connectors; Box is a custom OAuth build
 - [ ] **CRM sync** (HubSpot / Salesforce / Pipedrive) — all native connectors
+
+### 6a. Per-user cloud storage OAuth (Google Drive / OneDrive / SharePoint)
+
+The OAuth code is **already wired** (see `src/lib/oauth.functions.ts` + `src/routes/api/public/oauth/*`). It activates the moment the 4 secrets below are added. **Do this AFTER the custom domain is live** so the redirect URI is stable.
+
+**Redirect URIs to register** (using the client's custom domain, e.g. `proposals.client.com`):
+- Google: `https://proposals.client.com/api/public/oauth/google/callback`
+- Microsoft (handles both OneDrive + SharePoint): `https://proposals.client.com/api/public/oauth/microsoft/callback`
+
+**Google Cloud Console** ([console.cloud.google.com](https://console.cloud.google.com/apis/credentials)):
+1. Enable the Google Drive API
+2. Configure OAuth consent screen → add scope `https://www.googleapis.com/auth/drive.readonly`
+3. Create OAuth Client ID → Web application → add redirect URI above
+4. Copy Client ID + Client Secret
+
+**Microsoft Entra / Azure** ([portal.azure.com](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)):
+1. New registration → "Accounts in any organizational directory and personal Microsoft accounts"
+2. Add Web redirect URI above
+3. API permissions → Microsoft Graph → Delegated: `Files.Read`, `Files.Read.All`, `Sites.Read.All`, `offline_access`, `User.Read`
+4. Certificates & secrets → New client secret → copy the **value** (not the ID)
+
+**Add 4 secrets to the project** (via the Cloud secrets manager):
+- [ ] `GOOGLE_OAUTH_CLIENT_ID`
+- [ ] `GOOGLE_OAUTH_CLIENT_SECRET`
+- [ ] `MICROSOFT_OAUTH_CLIENT_ID`
+- [ ] `MICROSOFT_OAUTH_CLIENT_SECRET`
+
+Once added, the Connect buttons on `/connections` go live for every end user — no code changes needed.
 
 ## 7. Defaults to Sanity-Check (5 min)
 
