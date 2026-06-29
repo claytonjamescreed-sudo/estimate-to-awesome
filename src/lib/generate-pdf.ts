@@ -4,8 +4,8 @@
 // content splits. Returns a Blob suitable for download or iframe preview.
 
 export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
-  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-    import("html2canvas"),
+  const [{ toPng }, { jsPDF }] = await Promise.all([
+    import("html-to-image"),
     import("jspdf"),
   ]);
 
@@ -16,19 +16,18 @@ export async function generateProposalPdf(root: HTMLElement): Promise<Blob> {
 
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
-    const canvas = await html2canvas(page, {
-      scale: 2,
-      useCORS: true,
+    const dataUrl = await toPng(page, {
+      pixelRatio: 2,
       backgroundColor: "#ffffff",
-      windowWidth: page.scrollWidth,
+      cacheBust: true,
     });
-    const imgData = canvas.toDataURL("image/jpeg", 0.95);
     if (i > 0) pdf.addPage("letter", "portrait");
-    pdf.addImage(imgData, "JPEG", 0, 0, 8.5, 11, undefined, "FAST");
+    pdf.addImage(dataUrl, "PNG", 0, 0, 8.5, 11, undefined, "FAST");
   }
 
   return pdf.output("blob");
 }
+
 
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
