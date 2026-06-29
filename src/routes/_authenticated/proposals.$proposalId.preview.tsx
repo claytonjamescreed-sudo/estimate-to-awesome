@@ -1,7 +1,7 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { Printer } from "lucide-react";
+import { ArrowLeft, Download, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ProposalDocument } from "@/components/proposal-document";
@@ -29,11 +29,33 @@ function PreviewPage() {
   const totals = calcLineItemsTotal(data.content);
 
   return (
-    <div className="min-h-screen bg-muted/40 py-10">
-      <div className="print-hide fixed top-4 right-4 z-50">
-        <Button onClick={() => window.print()}><Printer className="h-4 w-4" /> Print / Save as PDF</Button>
+    <div className="min-h-screen bg-muted/40">
+      {/* Floating toolbar — hidden in print */}
+      <div className="print-hide sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/proposals/$proposalId" params={{ proposalId }}>
+              <ArrowLeft className="h-4 w-4" /> Back to editor
+            </Link>
+          </Button>
+          <div className="text-sm text-muted-foreground truncate px-4">{data.title}</div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="h-4 w-4" /> Print
+            </Button>
+            <Button size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Download PDF
+            </Button>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 pb-2 text-[11px] text-muted-foreground">
+          Tip: in the print dialog choose <span className="font-medium">Save as PDF</span> as the destination, set margins to <span className="font-medium">None</span>, and enable <span className="font-medium">Background graphics</span> for full branding.
+        </div>
       </div>
-      <ProposalDocument content={data.content} currency={data.currency} totals={totals} />
+
+      <div className="py-10 space-y-8 print:py-0 print:space-y-0">
+        <ProposalDocument content={data.content} currency={data.currency} totals={totals} />
+      </div>
     </div>
   );
 }
