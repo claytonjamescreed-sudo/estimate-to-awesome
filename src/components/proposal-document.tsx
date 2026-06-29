@@ -110,7 +110,7 @@ type InvestmentPage = {
   showSummary: boolean;
 };
 
-const INVESTMENT_PAGE_UNITS = 18;
+const INVESTMENT_PAGE_UNITS = 16;
 
 function rowUnits(item: LineItem) {
   const textLength = `${item.make} ${item.model} ${item.description}`.length;
