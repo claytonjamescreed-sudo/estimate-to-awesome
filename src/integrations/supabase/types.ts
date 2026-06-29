@@ -305,6 +305,54 @@ export type Database = {
           },
         ]
       }
+      user_integrations: {
+        Row: {
+          access_token: string | null
+          account_email: string | null
+          account_label: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          provider: Database["public"]["Enums"]["integration_provider"]
+          refresh_token: string | null
+          scope: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_email?: string | null
+          account_label?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          provider: Database["public"]["Enums"]["integration_provider"]
+          refresh_token?: string | null
+          scope?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          account_email?: string | null
+          account_label?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          refresh_token?: string | null
+          scope?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -343,6 +391,7 @@ export type Database = {
       app_role: "admin" | "user"
       client_request_status: "new" | "in_progress" | "resolved" | "wont_fix"
       client_request_type: "bug" | "feature" | "other"
+      integration_provider: "google_drive" | "onedrive" | "sharepoint"
       proposal_status: "draft" | "sent" | "won" | "lost" | "archived"
     }
     CompositeTypes: {
@@ -474,6 +523,7 @@ export const Constants = {
       app_role: ["admin", "user"],
       client_request_status: ["new", "in_progress", "resolved", "wont_fix"],
       client_request_type: ["bug", "feature", "other"],
+      integration_provider: ["google_drive", "onedrive", "sharepoint"],
       proposal_status: ["draft", "sent", "won", "lost", "archived"],
     },
   },
