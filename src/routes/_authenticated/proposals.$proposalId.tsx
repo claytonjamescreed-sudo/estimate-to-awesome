@@ -20,6 +20,9 @@ import { ProposalDocument } from "@/components/proposal-document";
 import { calcLineItemsTotal, STANDARD_TERMS } from "@/lib/proposal-defaults";
 import { money } from "@/lib/format";
 import { lookupClient } from "@/lib/client-lookup.functions";
+import { enrichProduct } from "@/lib/product-enrich.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Wand2 } from "lucide-react";
 import type { ProposalContent, ProposalRow, ProposalStatus, LineItem, LineSection, FeaturedProduct } from "@/lib/proposal-types";
 
 export const Route = createFileRoute("/_authenticated/proposals/$proposalId")({
@@ -265,7 +268,14 @@ function EditorPage() {
                     </div>
                   </div>
                 ))}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <FromEstimatePicker
+                    sections={draft.content.line_items.sections}
+                    onAdd={(items) => updateContent((c) => {
+                      for (const p of items) c.featured_products.products.push({ ...p, id: crypto.randomUUID() });
+                      c.featured_products.enabled = true;
+                    })}
+                  />
                   <ProductLibraryPicker
                     onPick={(prod) => updateContent((c) => {
                       c.featured_products.products.push({ ...prod, id: crypto.randomUUID() });
@@ -551,4 +561,157 @@ function ProductLibraryPicker({ onPick }: { onPick: (p: Omit<FeaturedProduct, "i
     </Dialog>
   );
 }
+
+interface EstimateCandidate {
+  key: string;
+  make: string;
+  model: string;
+  description: string;
+  qty: number;
+}
+
+function FromEstimatePicker({
+  sections, onAdd,
+}: { sections: LineSection[]; onAdd: (items: Omit<FeaturedProduct, "id">[]) => void }) {
+  const fn = useServerFn(enrichProduct);
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const candidates = useMemo<EstimateCandidate[]>(() => {
+    const map = new Map<string, EstimateCandidate>();
+    for (const s of sections) {
+      for (const it of s.items) {
+        const make = (it.make || "").trim();
+        const model = (it.model || "").trim();
+        if (!make && !model) continue;
+        const key = `${make.toLowerCase()}|${model.toLowerCase()}`;
+        const existing = map.get(key);
+        if (existing) {
+          existing.qty += it.qty || 0;
+        } else {
+          map.set(key, {
+            key, make, model,
+            description: it.description || "",
+            qty: it.qty || 0,
+          });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [sections]);
+
+  const selectedKeys = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
+
+  async function run() {
+    const picks = candidates.filter((c) => selected[c.key]);
+    if (picks.length === 0) {
+      toast.error("Pick at least one product");
+      return;
+    }
+    setRunning(true);
+    setProgress({ done: 0, total: picks.length });
+    const enriched: Omit<FeaturedProduct, "id">[] = [];
+    let done = 0;
+    for (const p of picks) {
+      try {
+        const r = await fn({ data: { make: p.make, model: p.model, description: p.description } });
+        enriched.push({
+          name: r.name || `${p.make} ${p.model}`.trim(),
+          tagline: r.tagline,
+          image_url: r.image_url,
+          link: r.link,
+          highlights: r.highlights.length ? r.highlights : [""],
+        });
+      } catch (e) {
+        toast.error(`${p.make} ${p.model}: ${e instanceof Error ? e.message : "failed"}`);
+        enriched.push({
+          name: `${p.make} ${p.model}`.trim(),
+          tagline: "",
+          image_url: "",
+          link: "",
+          highlights: [p.description].filter(Boolean),
+        });
+      } finally {
+        done += 1;
+        setProgress({ done, total: picks.length });
+      }
+    }
+    onAdd(enriched);
+    setRunning(false);
+    setProgress(null);
+    setSelected({});
+    setOpen(false);
+    toast.success(`Added ${enriched.length} product${enriched.length === 1 ? "" : "s"}`);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!running) setOpen(v); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" disabled={candidates.length === 0}>
+          <Wand2 className="h-4 w-4" /> From estimate
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Pick products to feature</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          {candidates.length} unique product{candidates.length === 1 ? "" : "s"} parsed from the estimate.
+          We'll search each manufacturer's website for accurate name, image, and key features.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost" size="sm"
+            onClick={() => {
+              const all: Record<string, boolean> = {};
+              for (const c of candidates) all[c.key] = true;
+              setSelected(all);
+            }}
+          >Select all</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelected({})}>Clear</Button>
+          <span className="text-xs text-muted-foreground ml-auto">{selectedKeys.length} selected</span>
+        </div>
+        <div className="max-h-[50vh] overflow-y-auto space-y-1.5 pr-1">
+          {candidates.length === 0 && (
+            <p className="text-sm text-muted-foreground">No make/model line items yet. Parse an estimate first.</p>
+          )}
+          {candidates.map((c) => (
+            <label
+              key={c.key}
+              className="flex items-start gap-3 rounded-md border border-border p-2.5 hover:bg-accent/30 cursor-pointer"
+            >
+              <Checkbox
+                checked={!!selected[c.key]}
+                onCheckedChange={(v) => setSelected((s) => ({ ...s, [c.key]: !!v }))}
+                className="mt-0.5"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  {c.make} <span className="text-muted-foreground">{c.model}</span>
+                  {c.qty > 0 && <span className="ml-2 text-xs text-muted-foreground">× {c.qty}</span>}
+                </p>
+                {c.description && <p className="text-xs text-muted-foreground line-clamp-2">{c.description}</p>}
+              </div>
+            </label>
+          ))}
+        </div>
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+          {progress && (
+            <span className="text-xs text-muted-foreground mr-auto">
+              Researching {progress.done}/{progress.total}…
+            </span>
+          )}
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={running}>Cancel</Button>
+          <Button size="sm" onClick={run} disabled={running || selectedKeys.length === 0}>
+            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Research {selectedKeys.length > 0 ? `(${selectedKeys.length})` : ""}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
